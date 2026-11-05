@@ -77,7 +77,7 @@ def get_msp_advisory_for_crop(
     msp_rec = (
         db.query(MspRecord)
         .filter(MspRecord.crop_id == crop_id)
-        .order_by(MspRecord.year.desc())
+        .order_by(MspRecord.marketing_year.desc())
         .first()
     )
     msp_price = float(msp_rec.msp_inr_per_qtl) if msp_rec else None

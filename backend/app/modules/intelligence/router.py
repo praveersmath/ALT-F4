@@ -37,7 +37,7 @@ router = APIRouter(tags=["intelligence"])
 def make_meta(notes: Optional[List[str]] = None, source: str = "fixture") -> Meta:
     return Meta(
         data_source=source,
-        generated_at=dt.datetime.utcnow(),
+        generated_at=dt.datetime.now(dt.timezone.utc),
         notes=notes or ["Part 2 Intelligence Engine"],
     )
 
