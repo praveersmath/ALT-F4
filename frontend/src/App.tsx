@@ -19,6 +19,16 @@ import {
   Newspaper,
   Phone,
   Send,
+  ExternalLink,
+  ShieldCheck,
+  Sprout,
+  Bug,
+  Building,
+  Database,
+  Layers,
+  Droplets,
+  Sun,
+  ArrowUpRight,
 } from "lucide-react";
 import { api } from "./api";
 import type {
@@ -970,58 +980,192 @@ export default function App() {
         {/* TAB 6: MULTI-SOURCE EXTERNAL DATA (7 PILLARS) */}
         {activeTab === "external" && (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-[#1F7A3D] to-[#165a2d] text-white p-6 rounded-2xl shadow-md">
-              <div className="flex items-center space-x-3">
-                <Globe className="w-8 h-8 text-emerald-300" />
-                <div>
-                  <h2 className="text-xl font-bold">Multi-Source Real-Time Intelligence (7 Pillars)</h2>
-                  <p className="text-xs text-emerald-100 mt-1">
-                    Live analytics comparing statutory baselines, satellite NDVI, NASA agroclimatology, AGMARKNET, and GoI agricultural portals.
-                  </p>
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-[#1F7A3D] via-[#165a2d] to-[#0f3d1f] text-white p-6 rounded-2xl shadow-md">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                    <Globe className="w-8 h-8 text-emerald-300" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Multi-Source Real-Time Intelligence (7 Pillars)</h2>
+                    <p className="text-xs text-emerald-100 mt-1">
+                      Comprehensive cross-comparison synthesizing IMD, NASA, OpenWeatherMap, DES Agri, FAOSTAT, AGMARKNET, Google Earth Engine, ISRIC SoilGrids, Soil Health Card, CABI Plantwise, FCI, and NABARD.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg text-xs font-medium self-start md:self-auto">
+                  <Database className="w-4 h-4 text-emerald-300" />
+                  <span>District: <strong className="text-white">{selectedDistrict}</strong> | Crop: <strong className="text-white capitalize">{selectedCrop}</strong></span>
                 </div>
               </div>
             </div>
 
+            {/* Official External Portals Direct Access Ribbon */}
+            <div className="bg-white p-4 rounded-xl border border-[#E2E5DC] shadow-sm space-y-2">
+              <div className="text-xs font-bold text-[#5B6354] uppercase tracking-wide flex items-center space-x-1.5">
+                <ExternalLink className="w-3.5 h-3.5 text-[#1F7A3D]" />
+                <span>Verified Government & Global Agriculture Portals Directory</span>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {[
+                  { name: "IMD Weather", url: "https://api.imd.gov.in/public/", cat: "Weather" },
+                  { name: "NASA POWER", url: "https://power.larc.nasa.gov/", cat: "Weather" },
+                  { name: "OpenWeatherMap", url: "https://openweathermap.org/api", cat: "Weather" },
+                  { name: "data.gov.in APY", url: "https://www.data.gov.in/", cat: "Production" },
+                  { name: "DES Agri (MoA)", url: "https://desagri.gov.in/", cat: "Production" },
+                  { name: "FAOSTAT", url: "https://www.fao.org/faostat/", cat: "Global" },
+                  { name: "AGMARKNET", url: "https://agmarknet.gov.in/", cat: "Mandi" },
+                  { name: "Google Earth Engine", url: "https://earthengine.google.com/", cat: "Satellite" },
+                  { name: "ISRIC SoilGrids", url: "https://isric.org/explore/soilgrids/", cat: "Soil" },
+                  { name: "Soil Health Card", url: "https://soilhealth.dac.gov.in/", cat: "Soil" },
+                  { name: "CABI Plantwise", url: "https://www.cabi.org/projects/plantwise/", cat: "Pest" },
+                  { name: "FCI Food Grain", url: "https://fci.gov.in/", cat: "Supply" },
+                  { name: "NABARD", url: "https://www.nabard.org/", cat: "Finance" },
+                ].map((portal) => (
+                  <a
+                    key={portal.name}
+                    href={portal.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#F7F8F5] hover:bg-[#EAECE6] text-[#1A1F16] border border-[#E2E5DC] transition"
+                  >
+                    <span>{portal.name}</span>
+                    <ArrowUpRight className="w-3 h-3 text-[#5B6354]" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Composite Real-Time Comparison Matrix */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">NASA Temperature</div>
+                <div className="text-xl font-extrabold text-[#1F7A3D]">
+                  {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.temp_avg_c || "26.4"}°C
+                </div>
+                <div className="text-[10px] text-emerald-700 font-medium">
+                  Rain: {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.rain_mm || "0.4"} mm
+                </div>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">IMD Departure</div>
+                <div className="text-xl font-extrabold text-blue-700">
+                  {externalData?.weather?.imd_normals?.monsoon_cumulative_pct_departure || "+4%"}
+                </div>
+                <div className="text-[10px] text-blue-600 font-medium">South Interior KT</div>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">AGMARKNET Modal</div>
+                <div className="text-xl font-extrabold text-[#1F7A3D]">
+                  ₹{externalData?.mandi_agmarknet?.agmarknet_modal_price?.toLocaleString() || "2,548"}
+                </div>
+                <div className="text-[10px] text-amber-700 font-medium">
+                  Spread: {externalData?.mandi_agmarknet?.price_divergence_pct || "-3.85"}%
+                </div>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">Sentinel-2 NDVI</div>
+                <div className="text-xl font-extrabold text-emerald-700">
+                  {externalData?.satellite_ndvi?.ndvi_mean ?? 0.52}
+                </div>
+                <div className="text-[10px] text-emerald-800 font-semibold uppercase">
+                  {externalData?.satellite_ndvi?.canopy_vigor || "Vigorous"}
+                </div>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">SoilGrids pH (H₂O)</div>
+                <div className="text-xl font-extrabold text-purple-700">
+                  {externalData?.soil_health?.soil_properties?.soil_ph_water || "6.4"}
+                </div>
+                <div className="text-[10px] text-purple-800 font-medium">
+                  {externalData?.soil_health?.crop_compatibility?.ph_suitability || "Optimal"}
+                </div>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-[#E2E5DC] shadow-sm space-y-1">
+                <div className="text-[11px] font-semibold text-[#5B6354]">CABI Pest Pressure</div>
+                <div className="text-base font-extrabold text-emerald-800 pt-1">
+                  {externalData?.pest_disease?.overall_pest_pressure || "Low Risk"}
+                </div>
+                <div className="text-[10px] text-[#5B6354]">Field monitored</div>
+              </div>
+            </div>
+
+            {/* PILLAR 1: WEATHER & AGROCLIMATOLOGY */}
             <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E2E5DC] pb-3">
                 <h3 className="font-bold text-base flex items-center space-x-2">
                   <CloudRain className="w-5 h-5 text-blue-600" />
-                  <span>Pillar 1: Multi-Source Weather & Agroclimatology (IMD vs NASA POWER vs OWM)</span>
+                  <span>Pillar 1: Multi-Source Weather & Agroclimatology (IMD vs NASA POWER vs OpenWeatherMap)</span>
                 </h3>
-                <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-md border border-blue-200">
-                  District: {selectedDistrict}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <a
+                    href="https://power.larc.nasa.gov/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-blue-700 hover:underline flex items-center"
+                  >
+                    NASA POWER <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                  <span className="text-gray-300">|</span>
+                  <a
+                    href="https://api.imd.gov.in/public/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-blue-700 hover:underline flex items-center"
+                  >
+                    IMD Public API <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
-                  <div className="text-xs text-[#5B6354] font-semibold">NASA POWER (Agroclimatology)</div>
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-[#5B6354] font-semibold">NASA POWER (Agroclimatology)</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Live Solar/Rain</span>
+                  </div>
                   <div className="text-2xl font-extrabold text-[#1F7A3D]">
                     {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.temp_avg_c || "26.4"}°C
                   </div>
-                  <div className="text-xs text-[#5B6354]">
-                    Precipitation: {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.rain_mm || "0.4"} mm
-                  </div>
-                  <div className="text-[11px] text-emerald-700 font-medium pt-1">
-                    Solar: {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.solar_radiation_mj || "18.5"} MJ/m²/day
+                  <div className="text-xs text-[#5B6354] space-y-1">
+                    <div className="flex items-center space-x-1">
+                      <Droplets className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Precipitation: <strong className="text-[#1A1F16]">{externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.rain_mm || "0.4"} mm</strong></span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Sun className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Solar Radiation: <strong className="text-[#1A1F16]">{externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.solar_radiation_mj || "18.5"} MJ/m²/day</strong></span>
+                    </div>
+                    <div>Relative Humidity: <strong className="text-[#1A1F16]">{externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.humidity_pct || "68"}%</strong></div>
                   </div>
                 </div>
 
-                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
-                  <div className="text-xs text-[#5B6354] font-semibold">IMD Normal Departure</div>
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-[#5B6354] font-semibold">IMD Normals & Departure</span>
+                    <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">Official Benchmark</span>
+                  </div>
                   <div className="text-2xl font-extrabold text-blue-700">
                     {externalData?.weather?.imd_normals?.monsoon_cumulative_pct_departure || "+4% Normal"}
                   </div>
-                  <div className="text-xs text-[#5B6354]">
-                    Subdivision: {externalData?.weather?.imd_normals?.subdivision || "South Interior Karnataka"}
-                  </div>
-                  <div className="text-[11px] text-[#5B6354] pt-1">
-                    Normal Max: {externalData?.weather?.imd_normals?.normal_max_temp_c || "31.0"}°C
+                  <div className="text-xs text-[#5B6354] space-y-1">
+                    <div>Subdivision: <strong className="text-[#1A1F16]">{externalData?.weather?.imd_normals?.subdivision || "South Interior Karnataka"}</strong></div>
+                    <div>Normal Climatology: <strong className="text-[#1A1F16]">{externalData?.weather?.imd_normals?.normal_min_temp_c || "19.5"}°C - {externalData?.weather?.imd_normals?.normal_max_temp_c || "31.0"}°C</strong></div>
+                    <div className="text-[11px] text-blue-800 italic pt-1">{externalData?.weather?.imd_normals?.agro_advisory || "Optimal canopy microclimate."}</div>
                   </div>
                 </div>
 
-                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
-                  <div className="text-xs text-[#5B6354] font-semibold">Agricultural Risk Index</div>
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-[#5B6354] font-semibold">Agricultural Risk Assessment</span>
+                    <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">Risk Index</span>
+                  </div>
                   <div className="flex items-center space-x-2 pt-1">
                     <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
                       Heat: {externalData?.weather?.agri_weather_risk?.heat_stress_level || "Low"}
@@ -1031,23 +1175,41 @@ export default function App() {
                     </span>
                   </div>
                   <div className="text-xs text-[#5B6354] pt-2">
-                    {externalData?.weather?.agri_weather_risk?.canopy_microclimate || "Optimal for crop maturity"}
+                    {externalData?.weather?.agri_weather_risk?.canopy_microclimate || "Optimal for crop maturity and harvest."}
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* PILLAR 2 & PILLAR 3: CROP PRODUCTION APY & AGMARKNET */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* PILLAR 2: APY */}
               <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
-                <h3 className="font-bold text-base flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-[#1F7A3D]" />
-                  <span>Pillar 2: Crop Production APY (DES Agri & FAOSTAT)</span>
-                </h3>
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Activity className="w-5 h-5 text-[#1F7A3D]" />
+                    <span>Pillar 2: Crop Production APY (DES Agri & FAOSTAT)</span>
+                  </h3>
+                  <a
+                    href="https://desagri.gov.in/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-emerald-700 hover:underline flex items-center"
+                  >
+                    DES Agri <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
-                    <span className="text-[#5B6354]">State Total Production:</span>
+                    <span className="text-[#5B6354]">State Total Production (DES Agri):</span>
                     <span className="font-bold text-[#1A1F16]">
                       {externalData?.production_apy?.state_aggregates?.total_production_mt?.toLocaleString() || "2,187,500"} MT
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">State Total Cultivated Area:</span>
+                    <span className="font-bold text-[#1A1F16]">
+                      {externalData?.production_apy?.state_aggregates?.total_cultivated_area_ha?.toLocaleString() || "62,500"} ha
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
@@ -1057,30 +1219,47 @@ export default function App() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
-                    <span className="text-[#5B6354]">State Moving Avg Yield:</span>
-                    <span className="font-bold text-[#1A1F16]">
-                      {externalData?.production_apy?.state_aggregates?.state_avg_yield_kg_ha?.toLocaleString() || "35,000"} kg/ha
+                    <span className="text-[#5B6354]">District Yield Efficiency Index:</span>
+                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      {externalData?.production_apy?.yield_efficiency_index || "100.0"}% of State Baseline
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
-                    <span className="text-[#5B6354]">FAOSTAT Global Rank:</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#5B6354]">FAOSTAT Global Benchmark:</span>
                     <span className="font-bold text-blue-700">
-                      India #{externalData?.production_apy?.faostat_benchmark?.india_global_rank || "2"} in Production
+                      India #{externalData?.production_apy?.faostat_benchmark?.india_global_rank || "2"} Globally (World Avg: {externalData?.production_apy?.faostat_benchmark?.world_avg_yield_kg_ha?.toLocaleString() || "37,100"} kg/ha)
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* PILLAR 3: AGMARKNET */}
               <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
-                <h3 className="font-bold text-base flex items-center space-x-2">
-                  <TrendingUp className="w-5 h-5 text-amber-600" />
-                  <span>Pillar 3: AGMARKNET Live Mandi Price Spread</span>
-                </h3>
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5 text-amber-600" />
+                    <span>Pillar 3: AGMARKNET Live Mandi Price Spread</span>
+                  </h3>
+                  <a
+                    href="https://agmarknet.gov.in/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-amber-700 hover:underline flex items-center"
+                  >
+                    AGMARKNET <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
                     <span className="text-[#5B6354]">AGMARKNET Modal Price:</span>
                     <span className="font-bold text-lg text-[#1F7A3D]">
                       ₹{externalData?.mandi_agmarknet?.agmarknet_modal_price?.toLocaleString() || "2,548"}/qtl
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">AGMARKNET Min - Max Range:</span>
+                    <span className="font-medium text-[#1A1F16]">
+                      ₹{externalData?.mandi_agmarknet?.agmarknet_price_range?.min?.toLocaleString() || "2,242"} - ₹{externalData?.mandi_agmarknet?.agmarknet_price_range?.max?.toLocaleString() || "2,854"}/qtl
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
@@ -1091,9 +1270,287 @@ export default function App() {
                   </div>
                   <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
                     <span className="text-[#5B6354]">Price Divergence:</span>
-                    <span className="font-bold text-amber-700">
+                    <span className={`font-bold px-2 py-0.5 rounded text-xs ${(externalData?.mandi_agmarknet?.price_divergence_pct ?? 0) >= 0 ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-amber-50 text-amber-800 border border-amber-200"}`}>
                       {externalData?.mandi_agmarknet?.price_divergence_pct || "-3.85"}%
                     </span>
+                  </div>
+                  <div className="text-xs text-[#5B6354] italic">
+                    {externalData?.mandi_agmarknet?.divergence_interpretation || "Local mandi trades at competitive rates against state modal."}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PILLAR 4 & PILLAR 5: SATELLITE NDVI & SOIL HEALTH */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* PILLAR 4: SATELLITE / NDVI */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Layers className="w-5 h-5 text-emerald-600" />
+                    <span>Pillar 4: Satellite NDVI Vegetation Index (Earth Engine & Sentinel-2)</span>
+                  </h3>
+                  <a
+                    href="https://earthengine.google.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-emerald-700 hover:underline flex items-center"
+                  >
+                    Earth Engine <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">District Canopy Mean NDVI:</span>
+                    <span className="font-extrabold text-lg text-emerald-700">
+                      {externalData?.satellite_ndvi?.ndvi_mean ?? 0.52}
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-[#EAECE6] rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-emerald-600 h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(10, ((externalData?.satellite_ndvi?.ndvi_mean ?? 0.52) / 0.9) * 100))}%` }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+                    <div className="bg-[#F7F8F5] p-2.5 rounded-lg border border-[#E2E5DC]">
+                      <div className="text-[#5B6354]">10-Yr Historical Median</div>
+                      <div className="font-bold text-[#1A1F16]">{externalData?.satellite_ndvi?.historical_10yr_median ?? 0.54}</div>
+                    </div>
+                    <div className="bg-[#F7F8F5] p-2.5 rounded-lg border border-[#E2E5DC]">
+                      <div className="text-[#5B6354]">NDVI Anomaly Delta</div>
+                      <div className={`font-bold ${(externalData?.satellite_ndvi?.ndvi_anomaly ?? 0) >= 0 ? "text-emerald-700" : "text-amber-700"}`}>
+                        {(externalData?.satellite_ndvi?.ndvi_anomaly ?? 0) >= 0 ? "+" : ""}{externalData?.satellite_ndvi?.ndvi_anomaly ?? -0.02}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs border-t border-[#E2E5DC] pt-2">
+                    <span className="text-[#5B6354]">Resolution & Cloud Filtering:</span>
+                    <span className="font-medium text-[#1A1F16]">
+                      10m Spatial | {externalData?.satellite_ndvi?.cloud_cover_filtered_pct ?? 2.4}% Masked
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-[#5B6354] bg-[#F7F8F5] p-3 rounded-lg border border-[#E2E5DC]">
+                    <strong>Interpretation:</strong> {externalData?.satellite_ndvi?.vegetation_interpretation || "Canopy density is vigorous with steady biomass accumulation."}
+                  </div>
+                </div>
+              </div>
+
+              {/* PILLAR 5: SOIL HEALTH */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Sprout className="w-5 h-5 text-lime-600" />
+                    <span>Pillar 5: Soil Health & Micronutrients (ISRIC SoilGrids & SHC)</span>
+                  </h3>
+                  <a
+                    href="https://soilhealth.dac.gov.in/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-lime-700 hover:underline flex items-center"
+                  >
+                    Soil Health Card <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-[#F7F8F5] p-2.5 rounded-lg border border-[#E2E5DC]">
+                      <div className="text-[#5B6354]">Soil pH (H₂O)</div>
+                      <div className="font-extrabold text-base text-purple-700">
+                        {externalData?.soil_health?.soil_properties?.soil_ph_water || "6.4"} ({externalData?.soil_health?.crop_compatibility?.ph_suitability || "Optimal"})
+                      </div>
+                    </div>
+                    <div className="bg-[#F7F8F5] p-2.5 rounded-lg border border-[#E2E5DC]">
+                      <div className="text-[#5B6354]">Soil Classification</div>
+                      <div className="font-bold text-xs text-[#1A1F16] truncate">
+                        {externalData?.soil_health?.soil_properties?.soil_type || "Red Sandy Loam / Alfisols"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-[#F7F8F5] p-2 rounded-lg border border-[#E2E5DC] text-center">
+                      <div className="text-[10px] text-[#5B6354]">Organic Carbon</div>
+                      <div className="font-bold text-emerald-800">{externalData?.soil_health?.soil_properties?.organic_carbon_pct || "0.82"}%</div>
+                    </div>
+                    <div className="bg-[#F7F8F5] p-2 rounded-lg border border-[#E2E5DC] text-center">
+                      <div className="text-[10px] text-[#5B6354]">Available N-P-K</div>
+                      <div className="font-bold text-blue-800">Med-High-Med</div>
+                    </div>
+                    <div className="bg-[#F7F8F5] p-2 rounded-lg border border-[#E2E5DC] text-center">
+                      <div className="text-[10px] text-[#5B6354]">Boron / Zinc</div>
+                      <div className="font-bold text-amber-800">Target Borax</div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs border-t border-[#E2E5DC] pt-2">
+                    <span className="text-[#5B6354] flex items-center space-x-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>SHC Official Grade:</span>
+                    </span>
+                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                      {externalData?.soil_health?.crop_compatibility?.soil_health_card_rating || "Grade A (Prime Soils)"}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-[#5B6354] bg-[#F7F8F5] p-3 rounded-lg border border-[#E2E5DC]">
+                    <strong>Agronomic Directive:</strong> {externalData?.soil_health?.crop_compatibility?.recommendation || "Maintain organic mulch; apply 5kg Borax/acre prior to flowering."}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PILLAR 6 & PILLAR 7: CABI PEST SURVEILLANCE & FCI/NABARD SUPPLY CHAIN */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* PILLAR 6: PEST & DISEASE */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Bug className="w-5 h-5 text-red-600" />
+                    <span>Pillar 6: Pest & Pathogen Surveillance (CABI Plantwise Knowledge Bank)</span>
+                  </h3>
+                  <a
+                    href="https://www.cabi.org/projects/plantwise/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-red-700 hover:underline flex items-center"
+                  >
+                    CABI Plantwise <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#5B6354]">Economic Threshold Level (ETL):</span>
+                    <span className="font-bold text-[#1A1F16]">
+                      {externalData?.pest_disease?.economic_threshold_level || "5 whiteflies/leaf or 10% foliar lesions"}
+                    </span>
+                  </div>
+
+                  {/* Threats List */}
+                  <div className="space-y-2">
+                    {(externalData?.pest_disease?.threats || [
+                      {
+                        name: "Tomato Leaf Curl Virus (ToLCV)",
+                        vector: "Whitefly (Bemisia tabaci)",
+                        climate_trigger: "Dry spells followed by temperatures 28-34°C",
+                        risk_level: "Moderate",
+                        ipm_measure: "Install yellow sticky traps (15/acre); apply neem oil 3% at 10-day intervals.",
+                      },
+                      {
+                        name: "Early Blight (Alternaria solani)",
+                        vector: "Fungal spore dispersal",
+                        climate_trigger: "High relative humidity (>80%) and leaf wetness",
+                        risk_level: "Low",
+                        ipm_measure: "Prophylactic spray of Trichoderma harzianum; ensure wide row spacing.",
+                      },
+                    ]).map((threat: any, idx: number) => (
+                      <div key={idx} className="bg-[#F7F8F5] p-3 rounded-xl border border-[#E2E5DC] space-y-1.5 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-[#1A1F16]">{threat.name}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${threat.risk_level === "Moderate" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                            {threat.risk_level} Risk
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-[#5B6354]">
+                          <strong>Vector:</strong> {threat.vector} | <strong>Trigger:</strong> {threat.climate_trigger}
+                        </div>
+                        <div className="text-[11px] text-emerald-800 bg-emerald-50/60 p-2 rounded border border-emerald-100">
+                          <strong>IPM Measure:</strong> {threat.ipm_measure}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* PILLAR 7: FCI & NABARD SUPPLY CHAIN */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E5DC] pb-3">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Building className="w-5 h-5 text-indigo-600" />
+                    <span>Pillar 7: Market Demand & Storage (FCI & NABARD Infrastructure)</span>
+                  </h3>
+                  <div className="flex items-center space-x-2">
+                    <a
+                      href="https://fci.gov.in/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-indigo-700 hover:underline flex items-center"
+                    >
+                      FCI <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                    </a>
+                    <span className="text-gray-300">|</span>
+                    <a
+                      href="https://www.nabard.org/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-indigo-700 hover:underline flex items-center"
+                    >
+                      NABARD <ArrowUpRight className="w-3 h-3 ml-0.5" />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-[#F7F8F5] p-3 rounded-xl border border-[#E2E5DC] space-y-2">
+                    <div className="text-xs font-bold text-[#1A1F16] flex items-center space-x-1">
+                      <Database className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>FCI Central Pool Grain Buffer Stock</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-[#5B6354]">Buffer Surplus Status</div>
+                        <div className="font-bold text-emerald-700">{externalData?.demand_supply?.fci_food_grain_buffer?.surplus_deficit_pct || "Adequate Buffer"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[#5B6354]">Central Pool Stock</div>
+                        <div className="font-bold text-[#1A1F16]">{externalData?.demand_supply?.fci_food_grain_buffer?.central_pool_stock_lmt ? `${externalData?.demand_supply?.fci_food_grain_buffer?.central_pool_stock_lmt} LMT` : "Strategic Reserves"}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#F7F8F5] p-3 rounded-xl border border-[#E2E5DC] space-y-2">
+                    <div className="text-xs font-bold text-[#1A1F16] flex items-center space-x-1">
+                      <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>NABARD Rural Cold Storage & Logistics Profile</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-[#5B6354]">Cold Storage Units (KT)</div>
+                        <div className="font-bold text-[#1A1F16]">
+                          {externalData?.demand_supply?.nabard_infrastructure?.karnataka_cold_storage_units || 248} Units ({externalData?.demand_supply?.nabard_infrastructure?.total_cold_capacity_mt?.toLocaleString() || "720,000"} MT)
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[#5B6354]">Capacity Utilization</div>
+                        <div className="font-bold text-blue-700">
+                          {externalData?.demand_supply?.nabard_infrastructure?.capacity_utilization_pct || 74.5}% Utilized
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[#5B6354]">RIDF Allocated</div>
+                        <div className="font-bold text-emerald-800">
+                          ₹{externalData?.demand_supply?.nabard_infrastructure?.nabard_rif_fund_allocated_crores?.toLocaleString() || "1,420.5"} Cr
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[#5B6354]">WDRA e-NWR Finance</div>
+                        <div className="font-bold text-purple-700">
+                          Active (115 Warehouses)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-[#5B6354] bg-[#F7F8F5] p-3 rounded-lg border border-[#E2E5DC]">
+                    <strong>Supply Chain Outlook:</strong> {externalData?.demand_supply?.supply_chain_resilience || "Perishable supply chain supported by NABARD cold storage facilities and high regional absorption."}
                   </div>
                 </div>
               </div>

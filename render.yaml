@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: agriintel-karnataka
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: AGRIINTEL_DB_PATH
+        value: /app/backend/agriintel.db
