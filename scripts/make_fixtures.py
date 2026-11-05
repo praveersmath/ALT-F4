@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""Generate deterministic synthetic fixture data for local development."""
+import datetime as dt
+import math
+import random
+import sys
+from pathlib import Path
+
+# Set path for backend imports
+backend_path = Path(__file__).resolve().parent.parent / "backend"
+sys.path.insert(0, str(backend_path))
+
+from app.contracts.db_models import (  # noqa: E402
+    Crop, DemandProxy, FestivalEvent, FuelPrice, Market, MspRecord, PriceRecord, WeatherDaily,
+)
+from app.core.db import Base, SessionLocal, engine  # noqa: E402
+
+
+def generate_fixtures():
+    print("=" * 60)
+    print("WARNING: GENERATING SYNTHETIC FIXTURE DATA FOR LOCAL DEV ONLY!")
+    print("ALL ROWS WILL BE LABELED WITH source='fixture'.")
+    print("=" * 60)
+
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        # 1. Crops
+        crops_data = [
+            {"id": "tomato", "name": "Tomato", "category": "vegetable", "msp_applicable": False},
+            {"id": "onion", "name": "Onion", "category": "vegetable", "msp_applicable": False},
+            {"id": "wheat", "name": "Wheat", "category": "cereal", "msp_applicable": True},
+        ]
+        for c in crops_data:
+            existing = db.query(Crop).filter_by(id=c["id"]).first()
+            if not existing:
+                db.add(Crop(**c))
+        db.commit()
+
+        # 2. Markets (5 Karnataka markets)
+        markets_data = [
+            {"name": "Bengaluru (Binny Mill)", "district": "Bengaluru Urban", "state": "karnataka", "lat": 12.9716, "lon": 77.5946},
+            {"name": "Kolar Mandi", "district": "Kolar", "state": "karnataka", "lat": 13.1367, "lon": 78.1291},
+            {"name": "Hubballi APMC", "district": "Dharwad", "state": "karnataka", "lat": 15.3647, "lon": 75.1240},
+            {"name": "Belagavi APMC", "district": "Belagavi", "state": "karnataka", "lat": 15.8497, "lon": 74.4977},
+            {"name": "Mysuru Bandipalya", "district": "Mysuru", "state": "karnataka", "lat": 12.2958, "lon": 76.6394},
+        ]
+        market_objs = []
+        for m in markets_data:
+            rec = db.query(Market).filter_by(name=m["name"], district=m["district"], state=m["state"]).first()
+            if not rec:
+                rec = Market(**m, coords_estimated=False)
+                db.add(rec)
+                db.flush()
+            market_objs.append(rec)
+        db.commit()
+
+        # 3. Reference MSP (Wheat only)
+        existing_msp = db.query(MspRecord).filter_by(crop_id="wheat", marketing_year="2024-25").first()
+        if not existing_msp:
+            db.add(MspRecord(
+                crop_id="wheat",
+                marketing_year="2024-25",
+                msp_inr_per_qtl=2275.0,
+                source_note="Official CACP Benchmark 2024-25 (Fixture)",
+                source="fixture",
+            ))
+
+        # 4. Two years of daily price records
+        start_date = dt.date.today() - dt.timedelta(days=730)
+        rng = random.Random(42)  # Deterministic seed
+
+        print("Generating 2 years of daily price & weather records...")
+        base_prices = {"tomato": 1800.0, "onion": 2200.0, "wheat": 2400.0}
+
+        prices_to_insert = []
+        weather_to_insert = []
+
+        # Unique key sets to avoid re-insert collisions
+        existing_price_keys = {
+            (r.obs_date, r.market_id, r.crop_id)
+            for r in db.query(PriceRecord.obs_date, PriceRecord.market_id, PriceRecord.crop_id).all()
+        }
+        existing_weather_keys = {
+            (r.obs_date, r.district, r.state, r.is_forecast)
+            for r in db.query(WeatherDaily.obs_date, WeatherDaily.district, WeatherDaily.state, WeatherDaily.is_forecast).all()
+        }
+
+        for day_offset in range(731):
+            curr_date = start_date + dt.timedelta(days=day_offset)
+            day_of_year = curr_date.timetuple().tm_yday
+
+            # Price records per market and crop
+            for m in market_objs:
+                for crop_id, base_p in base_prices.items():
+                    key = (curr_date, m.id, crop_id)
+                    if key in existing_price_keys:
+                        continue
+
+                    # Synthetic seasonal oscillation + noise
+                    season = math.sin(2 * math.pi * day_of_year / 365.0) * (base_p * 0.25)
+                    noise = rng.uniform(-100.0, 100.0)
+                    modal = round(max(500.0, base_p + season + noise), 2)
+                    spread = round(rng.uniform(50.0, 150.0), 2)
+                    min_p = round(max(200.0, modal - spread), 2)
+                    max_p = round(modal + spread, 2)
+                    arr = round(rng.uniform(100.0, 1200.0), 1)
+
+                    prices_to_insert.append(PriceRecord(
+                        obs_date=curr_date,
+                        market_id=m.id,
+                        crop_id=crop_id,
+                        min_price=min_p,
+                        max_price=max_p,
+                        modal_price=modal,
+                        arrivals_qtl=arr,
+                        source="fixture",
+                        origin="fixture_generator",
+                    ))
+
+            # Weather daily per district
+            districts = {m.district: (m.lat, m.lon) for m in market_objs}
+            for dist, (lat, lon) in districts.items():
+                w_key = (curr_date, dist, "karnataka", False)
+                if w_key in existing_weather_keys:
+                    continue
+
+                t_max = round(28.0 + 5.0 * math.sin(2 * math.pi * day_of_year / 365.0) + rng.uniform(-2, 2), 1)
+                t_min = round(t_max - rng.uniform(8.0, 14.0), 1)
+                # Monsoonal rain (June-Sept)
+                rain = round(rng.uniform(5.0, 45.0), 1) if 150 <= day_of_year <= 270 and rng.random() > 0.6 else 0.0
+
+                weather_to_insert.append(WeatherDaily(
+                    obs_date=curr_date,
+                    district=dist,
+                    state="karnataka",
+                    lat=lat or 12.97,
+                    lon=lon or 77.59,
+                    temp_max_c=t_max,
+                    temp_min_c=t_min,
+                    rain_mm=rain,
+                    is_forecast=False,
+                    source="fixture",
+                    origin="fixture_generator",
+                ))
+
+        if prices_to_insert:
+            db.bulk_save_objects(prices_to_insert)
+        if weather_to_insert:
+            db.bulk_save_objects(weather_to_insert)
+
+        # 5. Fuel Prices
+        fuel_keys = {(r.obs_date, r.state) for r in db.query(FuelPrice.obs_date, FuelPrice.state).all()}
+        fuel_to_insert = []
+        for d in range(0, 731, 7):  # weekly sample
+            f_date = start_date + dt.timedelta(days=d)
+            if (f_date, "karnataka") not in fuel_keys:
+                fuel_to_insert.append(FuelPrice(
+                    obs_date=f_date,
+                    state="karnataka",
+                    diesel_inr_per_litre=88.50 + rng.uniform(-2, 5),
+                    source="fixture",
+                    origin="fixture_generator",
+                ))
+        if fuel_to_insert:
+            db.bulk_save_objects(fuel_to_insert)
+
+        # 6. Demand Proxies & Festivals
+        for m in market_objs:
+            if not db.query(DemandProxy).filter_by(district=m.district, state="karnataka").first():
+                db.add(DemandProxy(
+                    district=m.district,
+                    state="karnataka",
+                    population=1500000 + int(rng.uniform(200000, 8000000)),
+                    year=2021,
+                    source_note="Census 2011 projected (Fixture)",
+                    source="fixture",
+                ))
+
+        db.commit()
+        print("[SUCCESS] Deterministic fixture generation complete!")
+
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    generate_fixtures()
+

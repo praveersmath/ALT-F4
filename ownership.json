@@ -1,0 +1,46 @@
+{
+  "parts": {
+    "part/1-data": {
+      "modules": ["data"],
+      "paths": [
+        "backend/app/modules/data/**",
+        "backend/app/core/scheduler.py",
+        "backend/data/**",
+        "backend/tests/data/**",
+        "requirements/part1.txt"
+      ]
+    },
+    "part/2-intelligence": {
+      "modules": ["intelligence"],
+      "paths": [
+        "backend/app/modules/intelligence/**",
+        "backend/model_artifacts/**",
+        "backend/tests/intelligence/**",
+        "requirements/part2.txt",
+        "notebooks/part2/**"
+      ]
+    },
+    "part/3-logistics-marketplace": {
+      "modules": ["logistics", "auth", "marketplace"],
+      "paths": [
+        "backend/app/modules/logistics/**",
+        "backend/app/modules/auth/**",
+        "backend/app/modules/marketplace/**",
+        "backend/tests/logistics/**",
+        "backend/tests/auth/**",
+        "backend/tests/marketplace/**",
+        "requirements/part3.txt"
+      ]
+    },
+    "part/4-frontend": {
+      "modules": [],
+      "paths": [
+        "frontend/**"
+      ],
+      "exclude_paths": [
+        "frontend/src/contracts/**"
+      ]
+    }
+  }
+}
+

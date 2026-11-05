@@ -1,0 +1,5 @@
+-r requirements/base.txt
+-r requirements/part1.txt
+-r requirements/part2.txt
+-r requirements/part3.txt
+
