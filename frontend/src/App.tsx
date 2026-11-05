@@ -67,10 +67,16 @@ export default function App() {
   }, [activeTab, selectedCrop, selectedMarketId, selectedDistrict]);
 
   const checkAuth = async () => {
+    const token = localStorage.getItem("agriintel_token");
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
     try {
       const res = await api.getMe();
       setCurrentUser(res.data);
     } catch {
+      localStorage.removeItem("agriintel_token");
       setCurrentUser(null);
     }
   };
