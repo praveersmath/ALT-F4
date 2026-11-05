@@ -1,1 +1,4 @@
-
+# Part 3 Dependencies: Auth, Security, Routing/Geo helpers
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
