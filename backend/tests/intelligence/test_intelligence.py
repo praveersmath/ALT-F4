@@ -1,6 +1,13 @@
 """Unit and integration tests for Part 2 Intelligence module."""
+import sys
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from app.core.db import Base, engine
 from app.main import app
@@ -9,7 +16,9 @@ from app.main import app
 @pytest.fixture(scope="session", autouse=True)
 def prepare_db():
     Base.metadata.create_all(bind=engine)
-    # Generate test fixtures if database is empty
+    root_str = str(REPO_ROOT)
+    if root_str not in sys.path:
+        sys.path.insert(0, root_str)
     from scripts.make_fixtures import generate_fixtures
 
     generate_fixtures()
