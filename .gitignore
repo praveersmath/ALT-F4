@@ -11,3 +11,10 @@ backend/model_artifacts/*.joblib
 backend/model_artifacts/*.pkl
 !backend/model_artifacts/.gitkeep
 
+# IDE and agent metadata
+.agent/
+.agents/
+.gemini/
+.gsd/
+
+

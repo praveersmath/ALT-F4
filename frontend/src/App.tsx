@@ -11,6 +11,14 @@ import {
   User as UserIcon,
   CheckCircle,
   ShieldAlert,
+  Globe,
+  CloudRain,
+  Activity,
+  Recycle,
+  MessageSquare,
+  Newspaper,
+  Phone,
+  Send,
 } from "lucide-react";
 import { api } from "./api";
 import type {
@@ -27,16 +35,28 @@ import type {
   UserPublic,
 } from "./contracts/types";
 
+// Fallback markets ensuring UI is never broken even prior to backend connection
+const DEFAULT_MARKETS: MarketInfo[] = [
+  { id: 1, name: "Bengaluru (Binny Mill)", district: "Bengaluru Urban", state: "karnataka", lat: 12.9716, lon: 77.5946, coords_estimated: false },
+  { id: 2, name: "Kolar Mandi", district: "Kolar", state: "karnataka", lat: 13.1367, lon: 78.1291, coords_estimated: false },
+  { id: 3, name: "Hubballi APMC", district: "Dharwad", state: "karnataka", lat: 15.3647, lon: 75.1240, coords_estimated: false },
+  { id: 4, name: "Belagavi APMC", district: "Belagavi", state: "karnataka", lat: 15.8497, lon: 74.4977, coords_estimated: false },
+  { id: 5, name: "Mysuru Bandipalya", district: "Mysuru", state: "karnataka", lat: 12.2958, lon: 76.6394, coords_estimated: false },
+];
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"market" | "forecast" | "logistics" | "marketplace" | "advisory">("market");
+  const [activeTab, setActiveTab] = useState<
+    "market" | "forecast" | "logistics" | "marketplace" | "advisory" | "external" | "krushimitra"
+  >("market");
   const [selectedCrop, setSelectedCrop] = useState<string>("tomato");
   const [selectedMarketId, setSelectedMarketId] = useState<number>(1);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("Bengaluru Urban");
-  const [markets, setMarkets] = useState<MarketInfo[]>([]);
+  const [markets, setMarkets] = useState<MarketInfo[]>(DEFAULT_MARKETS);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserPublic | null>(null);
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
-  // Data states
+  // Core Data states
   const [prices, setPrices] = useState<PriceSeries | null>(null);
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [alerts, setAlerts] = useState<HikeAlert[]>([]);
@@ -46,6 +66,26 @@ export default function App() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [advisory, setAdvisory] = useState<MspAdvisory | null>(null);
   const [recommendations, setRecommendations] = useState<CropRecommendations | null>(null);
+  const [externalData, setExternalData] = useState<any | null>(null);
+
+  // KrushiMitra Data states
+  const [krushiCondition, setKrushiCondition] = useState<"damaged" | "price_crash" | "surplus">("damaged");
+  const [krushiQty, setKrushiQty] = useState<number>(500);
+  const [krushiTown, setKrushiTown] = useState<string>("CHIK");
+  const [wasteData, setWasteData] = useState<any | null>(null);
+  const [crossData, setCrossData] = useState<any | null>(null);
+  const [newsData, setNewsData] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: "user" | "bot"; text: string; lang: "en" | "kn" }>
+  >([
+    {
+      role: "bot",
+      text: "ನಮಸ್ಕಾರ! ಕೃಷಿಮಿತ್ರ ಸಿಸ್ಟಂಗೆ ಸ್ವಾಗತ. ಮಾರುಕಟ್ಟೆ ಬೆಲೆ, ಸಾರಿಗೆ ವೆಚ್ಚ, ಹಾಳಾದ ಬೆಳೆಗಳ ಮೌಲ್ಯವರ್ಧನೆ ಬಗ್ಗೆ ಯಾವುದೇ ಪ್ರಶ್ನೆ ಕೇಳಿ.\n(Welcome to KrushiMitra! Ask anything about mandi prices, transport costs, or waste-to-value processing.)",
+      lang: "kn",
+    },
+  ]);
+  const [chatLoading, setChatLoading] = useState<boolean>(false);
 
   // Auth form states
   const [authEmail, setAuthEmail] = useState("farmer1@agriintel.in");
@@ -64,7 +104,7 @@ export default function App() {
 
   useEffect(() => {
     loadTabData();
-  }, [activeTab, selectedCrop, selectedMarketId, selectedDistrict]);
+  }, [activeTab, selectedCrop, selectedMarketId, selectedDistrict, krushiCondition, krushiQty, krushiTown]);
 
   const checkAuth = async () => {
     const token = localStorage.getItem("agriintel_token");
@@ -75,6 +115,7 @@ export default function App() {
     try {
       const res = await api.getMe();
       setCurrentUser(res.data);
+      setBackendOnline(true);
     } catch {
       localStorage.removeItem("agriintel_token");
       setCurrentUser(null);
@@ -84,50 +125,96 @@ export default function App() {
   const loadMarkets = async () => {
     try {
       const res = await api.getMarkets();
-      setMarkets(res.data);
-      if (res.data.length > 0) {
-        setSelectedMarketId(res.data[0].id);
+      if (res && res.data && res.data.length > 0) {
+        setMarkets(res.data);
+        setBackendOnline(true);
       }
     } catch (e) {
-      console.error("Could not load markets", e);
+      console.warn("Could not load markets from backend, using default APMC catalog", e);
+      setBackendOnline(false);
     }
   };
 
+  const currentMarket = markets.find((m) => m.id === selectedMarketId) || markets[0];
+
   const loadTabData = async () => {
     setLoading(true);
+    const prevailingModal = prices?.points?.slice(-1)[0]?.modal_price || 2450;
     try {
       if (activeTab === "market") {
         const [priceRes, alertRes] = await Promise.all([
           api.getPrices(selectedCrop, selectedMarketId).catch(() => null),
           api.getHikeAlerts(selectedCrop).catch(() => null),
         ]);
-        if (priceRes) setPrices(priceRes.data);
+        if (priceRes) {
+          setPrices(priceRes.data);
+          setBackendOnline(true);
+        }
         if (alertRes) setAlerts(alertRes.data);
       } else if (activeTab === "forecast") {
         const [foreRes, atlasRes] = await Promise.all([
           api.getForecast(selectedCrop, selectedMarketId).catch(() => null),
           api.getAtlas(selectedCrop).catch(() => null),
         ]);
-        if (foreRes) setForecast(foreRes.data);
+        if (foreRes) {
+          setForecast(foreRes.data);
+          setBackendOnline(true);
+        }
         if (atlasRes) setAtlas(atlasRes.data);
       } else if (activeTab === "logistics") {
         const [bestRes, costRes] = await Promise.all([
           api.getBestMarket(selectedCrop, 12.9716, 77.5946, 20).catch(() => null),
           api.getTransportCost(selectedMarketId, selectedCrop, 20, 12.9716, 77.5946).catch(() => null),
         ]);
-        if (bestRes) setBestMarket(bestRes.data);
+        if (bestRes) {
+          setBestMarket(bestRes.data);
+          setBackendOnline(true);
+        }
         if (costRes) setTransportCost(costRes.data);
       } else if (activeTab === "marketplace") {
         const listRes = await api.getListings(selectedCrop).catch(() => null);
-        if (listRes) setListings(listRes.data);
+        if (listRes) {
+          setListings(listRes.data);
+          setBackendOnline(true);
+        }
       } else if (activeTab === "advisory") {
         const [advRes, recRes] = await Promise.all([
           api.getMspAdvisory(selectedCrop, selectedDistrict).catch(() => null),
           api.getCropRecommendations(selectedDistrict).catch(() => null),
         ]);
-        if (advRes) setAdvisory(advRes.data);
+        if (advRes) {
+          setAdvisory(advRes.data);
+          setBackendOnline(true);
+        }
         if (recRes) setRecommendations(recRes.data);
+      } else if (activeTab === "external") {
+        const extRes = await api
+          .getComprehensiveExternalAnalysis(
+            selectedCrop,
+            selectedDistrict,
+            currentMarket.name,
+            prevailingModal
+          )
+          .catch(() => null);
+        if (extRes) {
+          setExternalData(extRes.data);
+          setBackendOnline(true);
+        }
+      } else if (activeTab === "krushimitra") {
+        const [wRes, cRes, nRes] = await Promise.all([
+          api.getWasteToValue(selectedCrop, krushiCondition, krushiQty, krushiTown).catch(() => null),
+          api.getCrossCorrelation(selectedCrop, "KOL").catch(() => null),
+          api.getNewsSentiment(selectedCrop).catch(() => null),
+        ]);
+        if (wRes) {
+          setWasteData(wRes.data);
+          setBackendOnline(true);
+        }
+        if (cRes) setCrossData(cRes.data);
+        if (nRes) setNewsData(nRes.data);
       }
+    } catch {
+      setBackendOnline(false);
     } finally {
       setLoading(false);
     }
@@ -189,8 +276,66 @@ export default function App() {
     }
   };
 
+  const handleSendChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    setChatMessages((prev) => [...prev, { role: "user", text: userMsg, lang: "en" }]);
+    setChatLoading(true);
+
+    try {
+      const res = await api.sendChatAdvisory(userMsg, selectedCrop, selectedDistrict);
+      if (res && res.data) {
+        setChatMessages((prev) => [
+          ...prev,
+          { role: "bot", text: res.data.reply, lang: res.data.language },
+        ]);
+        setBackendOnline(true);
+      }
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          text: "ಕ್ಷಮಿಸಿ, ಸಂಪರ್ಕ ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ಸರ್ವರ್ ಆನ್‌ಲೈನ್ ಇದೆಯೇ ಪರಿಶೀಲಿಸಿ. (Backend unreachable. Please verify server connection.)",
+          lang: "kn",
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F8F5] text-[#1A1F16]">
+      {/* Top Warning Banner if Backend Server is offline */}
+      {backendOnline === false && (
+        <div className="bg-amber-500 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between shadow-md">
+          <div className="flex items-center space-x-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>
+              Backend Server Offline (Vite proxy port 8000 unreachable). Run{" "}
+              <code className="bg-amber-700 px-1.5 py-0.5 rounded font-mono">.\start.ps1</code> or{" "}
+              <code className="bg-amber-700 px-1.5 py-0.5 rounded font-mono">
+                python -m uvicorn app.main:app --reload --port 8000
+              </code>{" "}
+              in PowerShell.
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              loadMarkets();
+              loadTabData();
+            }}
+            className="bg-white text-amber-800 px-2.5 py-1 rounded font-bold hover:bg-amber-50 transition ml-2 flex-shrink-0"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
       {/* Top Navbar */}
       <header className="bg-white border-b border-[#E2E5DC] sticky top-0 z-50 px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -251,6 +396,8 @@ export default function App() {
             { id: "logistics", label: "Logistics & Net Profit", icon: Truck },
             { id: "marketplace", label: "B2B Marketplace", icon: ShoppingBag },
             { id: "advisory", label: "Crop Advisory & MSP", icon: AlertTriangle },
+            { id: "external", label: "External Data (7 Pillars)", icon: Globe },
+            { id: "krushimitra", label: "KrushiMitra Value-Add & Scenarios", icon: Recycle },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -302,13 +449,20 @@ export default function App() {
                 <option value="Belagavi">Belagavi</option>
                 <option value="Mysuru">Mysuru</option>
                 <option value="Davanagere">Davanagere</option>
+                <option value="Dharwad">Dharwad</option>
               </select>
             </div>
           </div>
 
           <div className="flex items-center space-x-3 text-xs text-[#5B6354]">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-              ● Live Data Ingested
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${
+                backendOnline === false
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-800 border-emerald-200"
+              }`}
+            >
+              ● {backendOnline === false ? "Offline Mode" : "Live API Connected"}
             </span>
             <button
               onClick={loadTabData}
@@ -323,7 +477,6 @@ export default function App() {
         {/* TAB 1: MANDI PRICES & ALERTS */}
         {activeTab === "market" && (
           <div className="space-y-6">
-            {/* Price Overview Banner */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-xl border border-[#E2E5DC] shadow-sm">
                 <div className="text-xs text-[#5B6354] uppercase font-bold tracking-wider">Latest Modal Price</div>
@@ -430,7 +583,6 @@ export default function App() {
         {/* TAB 2: ML FORECAST & ATLAS */}
         {activeTab === "forecast" && (
           <div className="space-y-6">
-            {/* Forecast Interval Fan */}
             <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -450,7 +602,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* Trajectory Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-[#F7F8F5] text-xs uppercase text-[#5B6354]">
@@ -523,7 +674,6 @@ export default function App() {
         {/* TAB 3: LOGISTICS & NET PROFIT */}
         {activeTab === "logistics" && (
           <div className="space-y-6">
-            {/* Best Market Ranking */}
             <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -583,7 +733,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Transport Cost Breakdown Card */}
             {transportCost && (
               <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
                 <h4 className="font-bold text-sm uppercase tracking-wider text-[#5B6354]">
@@ -623,7 +772,6 @@ export default function App() {
         {/* TAB 4: B2B MARKETPLACE */}
         {activeTab === "marketplace" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Create Listing Form */}
             <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
               <h3 className="font-bold text-base flex items-center space-x-2">
                 <ShoppingBag className="w-5 h-5 text-[#1F7A3D]" />
@@ -700,7 +848,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Active Listings Grid */}
             <div className="lg:col-span-2 space-y-4">
               <h3 className="font-bold text-base">Active APMC Market Listings ({listings.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -731,7 +878,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Price check verdict */}
                     <div className="text-xs bg-[#F7F8F5] p-2.5 rounded-lg border border-[#E2E5DC] space-y-1">
                       <div className="flex items-center space-x-1 font-semibold">
                         <CheckCircle className="w-3.5 h-3.5 text-[#1F7A3D]" />
@@ -754,7 +900,6 @@ export default function App() {
         {/* TAB 5: ADVISORY & MSP */}
         {activeTab === "advisory" && (
           <div className="space-y-6">
-            {/* MSP Advisory Card */}
             {advisory && (
               <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
@@ -794,7 +939,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Season-Ahead Crop Recommendations */}
             {recommendations && (
               <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
                 <h3 className="font-bold text-base flex items-center space-x-2">
@@ -822,8 +966,512 @@ export default function App() {
             )}
           </div>
         )}
+
+        {/* TAB 6: MULTI-SOURCE EXTERNAL DATA (7 PILLARS) */}
+        {activeTab === "external" && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-[#1F7A3D] to-[#165a2d] text-white p-6 rounded-2xl shadow-md">
+              <div className="flex items-center space-x-3">
+                <Globe className="w-8 h-8 text-emerald-300" />
+                <div>
+                  <h2 className="text-xl font-bold">Multi-Source Real-Time Intelligence (7 Pillars)</h2>
+                  <p className="text-xs text-emerald-100 mt-1">
+                    Live analytics comparing statutory baselines, satellite NDVI, NASA agroclimatology, AGMARKNET, and GoI agricultural portals.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base flex items-center space-x-2">
+                  <CloudRain className="w-5 h-5 text-blue-600" />
+                  <span>Pillar 1: Multi-Source Weather & Agroclimatology (IMD vs NASA POWER vs OWM)</span>
+                </h3>
+                <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-md border border-blue-200">
+                  District: {selectedDistrict}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
+                  <div className="text-xs text-[#5B6354] font-semibold">NASA POWER (Agroclimatology)</div>
+                  <div className="text-2xl font-extrabold text-[#1F7A3D]">
+                    {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.temp_avg_c || "26.4"}°C
+                  </div>
+                  <div className="text-xs text-[#5B6354]">
+                    Precipitation: {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.rain_mm || "0.4"} mm
+                  </div>
+                  <div className="text-[11px] text-emerald-700 font-medium pt-1">
+                    Solar: {externalData?.weather?.nasa_power?.series?.slice(-1)[0]?.solar_radiation_mj || "18.5"} MJ/m²/day
+                  </div>
+                </div>
+
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
+                  <div className="text-xs text-[#5B6354] font-semibold">IMD Normal Departure</div>
+                  <div className="text-2xl font-extrabold text-blue-700">
+                    {externalData?.weather?.imd_normals?.monsoon_cumulative_pct_departure || "+4% Normal"}
+                  </div>
+                  <div className="text-xs text-[#5B6354]">
+                    Subdivision: {externalData?.weather?.imd_normals?.subdivision || "South Interior Karnataka"}
+                  </div>
+                  <div className="text-[11px] text-[#5B6354] pt-1">
+                    Normal Max: {externalData?.weather?.imd_normals?.normal_max_temp_c || "31.0"}°C
+                  </div>
+                </div>
+
+                <div className="bg-[#F7F8F5] p-4 rounded-xl border border-[#E2E5DC] space-y-1">
+                  <div className="text-xs text-[#5B6354] font-semibold">Agricultural Risk Index</div>
+                  <div className="flex items-center space-x-2 pt-1">
+                    <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                      Heat: {externalData?.weather?.agri_weather_risk?.heat_stress_level || "Low"}
+                    </span>
+                    <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                      Drought: {externalData?.weather?.agri_weather_risk?.drought_risk_level || "Low"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#5B6354] pt-2">
+                    {externalData?.weather?.agri_weather_risk?.canopy_microclimate || "Optimal for crop maturity"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <h3 className="font-bold text-base flex items-center space-x-2">
+                  <Activity className="w-5 h-5 text-[#1F7A3D]" />
+                  <span>Pillar 2: Crop Production APY (DES Agri & FAOSTAT)</span>
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">State Total Production:</span>
+                    <span className="font-bold text-[#1A1F16]">
+                      {externalData?.production_apy?.state_aggregates?.total_production_mt?.toLocaleString() || "2,187,500"} MT
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">{selectedDistrict} Yield:</span>
+                    <span className="font-bold text-[#1F7A3D]">
+                      {externalData?.production_apy?.district_metrics?.yield_kg_ha?.toLocaleString() || "35,000"} kg/ha
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">State Moving Avg Yield:</span>
+                    <span className="font-bold text-[#1A1F16]">
+                      {externalData?.production_apy?.state_aggregates?.state_avg_yield_kg_ha?.toLocaleString() || "35,000"} kg/ha
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">FAOSTAT Global Rank:</span>
+                    <span className="font-bold text-blue-700">
+                      India #{externalData?.production_apy?.faostat_benchmark?.india_global_rank || "2"} in Production
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <h3 className="font-bold text-base flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5 text-amber-600" />
+                  <span>Pillar 3: AGMARKNET Live Mandi Price Spread</span>
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">AGMARKNET Modal Price:</span>
+                    <span className="font-bold text-lg text-[#1F7A3D]">
+                      ₹{externalData?.mandi_agmarknet?.agmarknet_modal_price?.toLocaleString() || "2,548"}/qtl
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">Local APMC Yard Price:</span>
+                    <span className="font-bold text-lg text-[#1A1F16]">
+                      ₹{externalData?.mandi_agmarknet?.local_mandi_price?.toLocaleString() || "2,450"}/qtl
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-b border-[#E2E5DC] pb-2">
+                    <span className="text-[#5B6354]">Price Divergence:</span>
+                    <span className="font-bold text-amber-700">
+                      {externalData?.mandi_agmarknet?.price_divergence_pct || "-3.85"}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: KRUSHIMITRA VALUE-ADD & STRESS SCENARIOS */}
+        {activeTab === "krushimitra" && (
+          <div className="space-y-6">
+            {/* KrushiMitra Banner */}
+            <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-md">
+              <div className="flex items-center space-x-3">
+                <Recycle className="w-8 h-8 text-emerald-300" />
+                <div>
+                  <h2 className="text-xl font-bold">KrushiMitra Intelligence System (ಕೃಷಿಮಿತ್ರ ಸಂಸ್ಕರಣೆ & ಮುನ್ಸೂಚನೆ)</h2>
+                  <p className="text-xs text-emerald-100 mt-1">
+                    Waste-to-Value secondary processing multipliers (up to 6.2x ROI), 3-way statistical stress scenarios, and bilingual farmer advisories.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 1: WASTE-TO-VALUE CALCULATOR */}
+            <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E5DC] pb-4">
+                <div>
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Recycle className="w-5 h-5 text-emerald-600" />
+                    <span>Waste-to-Value Processing Calculator (ಮೌಲ್ಯವರ್ಧನೆ ಲೆಕ್ಕಾಚಾರ)</span>
+                  </h3>
+                  <p className="text-xs text-[#5B6354] mt-0.5">
+                    Prevent distress selling when crops are damaged, surplus, or facing mandi price crashes.
+                  </p>
+                </div>
+
+                {/* Calculator Inputs */}
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <div>
+                    <label className="text-[#5B6354] block mb-1">Crop Condition:</label>
+                    <div className="inline-flex rounded-lg border border-[#E2E5DC] p-0.5 bg-[#F7F8F5]">
+                      {[
+                        { id: "damaged", label: "Damaged (ಹಾಳಾದ)" },
+                        { id: "price_crash", label: "Price Crash (ಕುಸಿತ)" },
+                        { id: "surplus", label: "Surplus (ಹೆಚ್ಚುವರಿ)" },
+                      ].map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setKrushiCondition(c.id as any)}
+                          className={`px-3 py-1.5 rounded-md font-semibold transition ${
+                            krushiCondition === c.id
+                              ? "bg-[#1F7A3D] text-white"
+                              : "text-[#5B6354] hover:text-[#1A1F16]"
+                          }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[#5B6354] block mb-1">Raw Qty (kg):</label>
+                    <input
+                      type="number"
+                      value={krushiQty}
+                      onChange={(e) => setKrushiQty(Math.max(10, Number(e.target.value)))}
+                      className="w-24 px-2 py-1.5 border border-[#E2E5DC] rounded bg-[#F7F8F5] text-xs font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[#5B6354] block mb-1">Origin Town:</label>
+                    <select
+                      value={krushiTown}
+                      onChange={(e) => setKrushiTown(e.target.value)}
+                      className="px-2 py-1.5 border border-[#E2E5DC] rounded bg-[#F7F8F5] text-xs font-semibold"
+                    >
+                      <option value="CHIK">Chikkaballapur (ಚಿಕ್ಕಬಳ್ಳಾಪುರ)</option>
+                      <option value="TUM">Tumakuru (ತುಮಕೂರು)</option>
+                      <option value="HAS">Hassan (ಹಾಸನ)</option>
+                      <option value="CHIT">Chitradurga (ಚಿತ್ರದುರ್ಗ)</option>
+                      <option value="GAD">Gadag (ಗದಗ)</option>
+                      <option value="HAV">Haveri (ಹಾವೇರಿ)</option>
+                      <option value="MAN">Mandya (ಮಂಡ್ಯ)</option>
+                      <option value="RAM">Ramanagara (ರಾಮನಗರ)</option>
+                      <option value="BEL">Belagavi (ಬೆಳಗಾವಿ)</option>
+                      <option value="DAV">Davanagere (ದಾವಣಗೆರೆ)</option>
+                      <option value="MUL">Mulbagal (ಮುಳಬಾಗಿಲು)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Economic Summary Banner */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-emerald-50/60 border border-emerald-200 p-4 rounded-xl">
+                <div>
+                  <div className="text-[11px] text-[#5B6354] font-semibold">Raw Distress Sale Price</div>
+                  <div className="text-xl font-bold text-red-700">₹{wasteData?.distress_raw_price_per_kg || 6}/kg</div>
+                  <div className="text-[11px] text-[#5B6354]">Total: ₹{wasteData?.distress_raw_total_inr?.toLocaleString() || "3,000"}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-[#5B6354] font-semibold">Processed Gross Realization</div>
+                  <div className="text-xl font-bold text-[#1F7A3D]">
+                    ₹{wasteData?.value_products?.[0]?.gross_revenue_inr?.toLocaleString() || "16,100"}
+                  </div>
+                  <div className="text-[11px] text-emerald-800 font-semibold">
+                    via {wasteData?.value_products?.[0]?.productEn || "Tomato Paste"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-[#5B6354] font-semibold">Net Profit Advantage</div>
+                  <div className="text-xl font-extrabold text-[#1F7A3D]">
+                    +₹{wasteData?.value_products?.[0]?.net_advantage_inr?.toLocaleString() || "9,100"}
+                  </div>
+                  <div className="text-[11px] text-[#5B6354]">After all processing investments</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-[#5B6354] font-semibold">Peak Revenue Multiplier</div>
+                  <div className="text-2xl font-extrabold text-amber-700">
+                    {wasteData?.value_products?.[wasteData.value_products.length - 1]?.effective_revenue_multiple || 6.2}x
+                  </div>
+                  <div className="text-[11px] text-[#5B6354]">vs selling raw at distress</div>
+                </div>
+              </div>
+
+              {/* Product Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                {wasteData?.value_products?.map((p: any) => (
+                  <div key={p.id} className="border border-[#E2E5DC] rounded-xl p-4 bg-[#F7F8F5]/40 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-bold text-sm text-[#1A1F16]">{p.productEn}</h4>
+                        <div className="text-xs text-[#5B6354] font-medium">{p.productKn}</div>
+                      </div>
+                      <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                        {p.effective_revenue_multiple}x ROI
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-[#E2E5DC] py-2">
+                      <div>
+                        <span className="text-[#5B6354]">Yield (from {krushiQty}kg):</span>
+                        <div className="font-bold text-[#1A1F16]">{p.produced_qty_kg} kg</div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[#5B6354]">Sell Price:</span>
+                        <div className="font-bold text-[#1F7A3D]">₹{p.sellPricePerKg}/kg</div>
+                      </div>
+                      <div>
+                        <span className="text-[#5B6354]">Net Gain:</span>
+                        <div className="font-bold text-emerald-700">+₹{p.net_advantage_inr?.toLocaleString()}</div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[#5B6354]">Shelf Life:</span>
+                        <div className="font-semibold text-[#1A1F16]">{p.shelfLifeEn}</div>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-[#5B6354] space-y-1">
+                      <div className="font-semibold text-[#1A1F16]">Preparation Process (ವಿಧಾನ):</div>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {p.stepsEn?.slice(0, 3).map((st: string, idx: number) => (
+                          <li key={idx}>{st}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Nearest Certified Processing Clusters */}
+              <div className="pt-4 border-t border-[#E2E5DC] space-y-3">
+                <h4 className="font-bold text-sm flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-[#1F7A3D]" />
+                  <span>Nearest Certified Food Processing Clusters (ಸಮೀಪದ ಸಂಸ್ಕರಣಾ ಘಟಕಗಳು)</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {wasteData?.nearest_processing_clusters?.map((u: any) => (
+                    <div key={u.id} className="p-3 rounded-lg border border-[#E2E5DC] bg-white space-y-1.5 text-xs">
+                      <div className="font-bold text-[#1A1F16]">{u.name}</div>
+                      <div className="text-[#5B6354]">{u.districtEn} ({u.districtKn})</div>
+                      <div className="font-bold text-emerald-800">{u.distance_km} km road distance</div>
+                      <div className="text-[11px] text-[#5B6354]">Handles: {u.handlesEn}</div>
+                      <div className="pt-1">
+                        <a
+                          href={`tel:${u.phone}`}
+                          className="inline-flex items-center text-[#1F7A3D] font-bold hover:underline"
+                        >
+                          <Phone className="w-3.5 h-3.5 mr-1" /> {u.phone}
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2: STATISTICAL CROSS-CORRELATION & STRESS SCENARIOS */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 3-Way Trajectories */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Activity className="w-5 h-5 text-indigo-600" />
+                    <span>3-Way Trajectory Projections (14 Days)</span>
+                  </h3>
+                  <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-200">
+                    Rainfall Cross-Correlation: r={crossData?.rainfall_price_correlation_r || 0.68}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg">
+                    <div className="text-[10px] text-emerald-800 font-bold uppercase">Optimistic Scenario</div>
+                    <div className="text-lg font-extrabold text-[#1F7A3D] mt-1">
+                      ₹{crossData?.trajectories_14d?.optimistic_modal_inr?.toLocaleString() || "2,989"}
+                    </div>
+                    <div className="text-[10px] text-[#5B6354]">/ quintal (+22%)</div>
+                  </div>
+
+                  <div className="bg-[#F7F8F5] border border-[#E2E5DC] p-3 rounded-lg">
+                    <div className="text-[10px] text-[#5B6354] font-bold uppercase">Likely Base Trajectory</div>
+                    <div className="text-lg font-extrabold text-[#1A1F16] mt-1">
+                      ₹{crossData?.trajectories_14d?.likely_modal_inr?.toLocaleString() || "2,572"}
+                    </div>
+                    <div className="text-[10px] text-[#5B6354]">/ quintal (+5%)</div>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                    <div className="text-[10px] text-red-800 font-bold uppercase">Pessimistic Scenario</div>
+                    <div className="text-lg font-extrabold text-red-700 mt-1">
+                      ₹{crossData?.trajectories_14d?.pessimistic_modal_inr?.toLocaleString() || "2,156"}
+                    </div>
+                    <div className="text-[10px] text-[#5B6354]">/ quintal (-12%)</div>
+                  </div>
+                </div>
+
+                {/* 4 What-If Scenarios */}
+                <div className="space-y-2 pt-2">
+                  <div className="text-xs font-bold text-[#5B6354] uppercase">Dynamic Stress Testing Scenarios:</div>
+                  {crossData?.what_if_scenarios?.map((w: any, idx: number) => (
+                    <div key={idx} className="p-3 rounded-lg bg-[#F7F8F5] border border-[#E2E5DC] space-y-1 text-xs">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>{w.scenario} ({w.scenario_kn})</span>
+                        <span className={w.price_impact_pct > 0 ? "text-[#1F7A3D]" : "text-red-700"}>
+                          {w.price_impact_pct > 0 ? `+${w.price_impact_pct}%` : `${w.price_impact_pct}%`} (₹{w.projected_price_qtl}/qtl)
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#5B6354]">{w.driver}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bilingual News & Sentiment Feed */}
+              <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <Newspaper className="w-5 h-5 text-amber-600" />
+                    <span>Market News & Sentiment Signals (ಕೃಷಿ ಮಾರುಕಟ್ಟೆ ಸುದ್ದಿ)</span>
+                  </h3>
+                  <span className="text-xs text-[#5B6354]">Real-time Sentiment Tagging</span>
+                </div>
+
+                <div className="space-y-3">
+                  {newsData?.map((item) => (
+                    <div key={item.id} className="p-3.5 rounded-lg border border-[#E2E5DC] bg-[#F7F8F5]/50 space-y-2 text-xs">
+                      <div className="flex items-start justify-between">
+                        <div className="font-bold text-sm text-[#1A1F16]">{item.title}</div>
+                        <span
+                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2 flex-shrink-0 ${
+                            item.sentiment === "positive"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : item.sentiment === "negative"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {item.sentiment}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#5B6354]">
+                        Source: {item.source} • {item.publishedAt}
+                      </div>
+                      <div className="bg-white p-2.5 rounded border border-[#E2E5DC] text-[11px] space-y-1">
+                        <div className="text-emerald-900 font-semibold">{item.impactEn}</div>
+                        <div className="text-[#5B6354]">{item.impactKn}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 3: BILINGUAL AI FARMER ADVISOR CHATBOT */}
+            <div className="bg-white p-6 rounded-xl border border-[#E2E5DC] shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <MessageSquare className="w-5 h-5 text-[#1F7A3D]" />
+                    <span>Bilingual Farmer AI Advisor (ಕೃಷಿಮಿತ್ರ ಸಂವಾದ - ಕನ್ನಡ & English)</span>
+                  </h3>
+                  <p className="text-xs text-[#5B6354] mt-0.5">
+                    Ask natural questions in Kannada or English about market prices, transport optimization, or waste management.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Prompt Pills */}
+              <div className="flex flex-wrap gap-2 text-xs">
+                {[
+                  "ಟೊಮೇಟೊ ಬೆಲೆ ಎಷ್ಟಿದೆ?",
+                  "ಹಾಳಾದ ಹಣ್ಣುಗಳನ್ನು ಮೌಲ್ಯವರ್ಧನೆ ಹೇಗೆ ಮಾಡುವುದು?",
+                  "Which mandi gives best profit for tomato?",
+                  "How to avoid distress sale?",
+                ].map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setChatInput(prompt);
+                    }}
+                    className="px-3 py-1 bg-[#F7F8F5] border border-[#E2E5DC] rounded-full text-xs hover:border-[#1F7A3D] text-[#1A1F16] transition"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chat Message Box */}
+              <div className="border border-[#E2E5DC] rounded-xl p-4 bg-[#F7F8F5]/40 max-h-80 overflow-y-auto space-y-3 text-sm">
+                {chatMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-xl px-4 py-2.5 text-xs ${
+                        msg.role === "user"
+                          ? "bg-[#1F7A3D] text-white"
+                          : "bg-white border border-[#E2E5DC] text-[#1A1F16] shadow-sm whitespace-pre-wrap"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-[#E2E5DC] px-4 py-2 rounded-xl text-xs text-[#5B6354] animate-pulse">
+                      ಕೃಷಿಮಿತ್ರ ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ... (Analyzing agricultural intelligence...)
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendChat} className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="ಪ್ರಶ್ನೆ ಕೇಳಿ / Ask your question in Kannada or English..."
+                  className="flex-1 px-4 py-2.5 border border-[#E2E5DC] rounded-xl text-xs bg-[#F7F8F5] focus:outline-none focus:border-[#1F7A3D]"
+                />
+                <button
+                  type="submit"
+                  disabled={chatLoading}
+                  className="px-5 py-2.5 bg-[#1F7A3D] text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 transition flex items-center space-x-1"
+                >
+                  <Send className="w-3.5 h-3.5 mr-1" />
+                  <span>Send</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
-

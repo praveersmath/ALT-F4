@@ -32,6 +32,25 @@ from app.contracts.schemas import (
     WeatherResponse,
 )
 from app.core.db import get_db
+from app.modules.data.external_sources import (
+    compare_agmarknet_live_prices,
+    compare_weather_sources,
+    get_cabi_pest_advisory,
+    get_comprehensive_external_analysis,
+    get_crop_production_apy,
+    get_fci_nabard_supply_metrics,
+    get_satellite_ndvi_index,
+    get_soil_health_profile,
+)
+from app.modules.data.krushimitra_integration import (
+    MANDIS_CATALOG,
+    ORIGIN_TOWNS,
+    PROCESSING_UNITS,
+    calculate_waste_to_value,
+    generate_farmer_advisory_reply,
+    get_agri_news_sentiment,
+    get_cross_correlation_scenarios,
+)
 
 router = APIRouter(tags=["data"])
 
@@ -278,3 +297,194 @@ def get_data_coverage(
             )
         )
     return ApiResponse(data=items, meta=make_meta([f"Coverage for {crop}"]))
+
+
+# -----------------------------------------------------------------------------
+# Real-Time Multi-Source External Integrations (7 Pillars)
+# -----------------------------------------------------------------------------
+
+@router.get("/external/weather-comparison")
+def get_weather_comparison(
+    district: str = Query("Bengaluru Urban", description="District name"),
+):
+    """Compares weather data across IMD normals, OpenWeatherMap, and NASA POWER."""
+    data = compare_weather_sources(district)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["Real-time Multi-source Weather (IMD, OWM, NASA POWER)"], source="live"),
+    )
+
+
+@router.get("/external/production-apy")
+def get_production_apy(
+    crop: str = Query("tomato", description="Crop identifier"),
+    district: str = Query("Bengaluru Urban", description="District name"),
+):
+    """Returns Area-Production-Yield (APY) datasets from DES Agri, data.gov.in, and FAOSTAT."""
+    data = get_crop_production_apy(crop, district)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["Crop Production APY & FAOSTAT Global Benchmarks"], source="live"),
+    )
+
+
+@router.get("/external/mandi-agmarknet")
+def get_agmarknet_comparison(
+    crop: str = Query("tomato", description="Crop identifier"),
+    market_name: str = Query("Bengaluru (Binny Mill)", description="Market name"),
+    prevailing_price: float = Query(2450.0, description="Local prevailing APMC price"),
+):
+    """Real-time AGMARKNET price spread and market divergence comparison."""
+    data = compare_agmarknet_live_prices(crop, market_name, prevailing_price)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["AGMARKNET Live Mandi Price Spread Comparator"], source="live"),
+    )
+
+
+@router.get("/external/satellite-ndvi")
+def get_satellite_ndvi(
+    district: str = Query("Bengaluru Urban", description="District name"),
+):
+    """Google Earth Engine / Copernicus Sentinel-2 vegetation and drought vigor index."""
+    data = get_satellite_ndvi_index(district)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["Satellite NDVI Vegetative Health Index"], source="live"),
+    )
+
+
+@router.get("/external/soil-health")
+def get_soil_health(
+    district: str = Query("Bengaluru Urban", description="District name"),
+    crop: str = Query("tomato", description="Crop identifier"),
+):
+    """ISRIC SoilGrids 250m properties and Soil Health Card Portal crop suitability."""
+    data = get_soil_health_profile(district, crop)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["ISRIC SoilGrids & Soil Health Card Portal"], source="live"),
+    )
+
+
+@router.get("/external/pest-risk")
+def get_pest_risk(
+    crop: str = Query("tomato", description="Crop identifier"),
+    district: str = Query("Bengaluru Urban", description="District name"),
+):
+    """CABI Plantwise pest and pathogen surveillance matrix with IPM advisories."""
+    data = get_cabi_pest_advisory(crop, district)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["CABI Plantwise Knowledge Bank Pest Advisory"], source="live"),
+    )
+
+
+@router.get("/external/fci-nabard-supply")
+def get_fci_nabard_supply(
+    crop: str = Query("wheat", description="Crop identifier"),
+):
+    """FCI Central Pool grain buffer stocks and NABARD rural storage infrastructure."""
+    data = get_fci_nabard_supply_metrics(crop)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["FCI Buffer Norms & NABARD Infrastructure"], source="live"),
+    )
+
+
+@router.get("/external/comprehensive-analysis")
+def get_comprehensive_analysis(
+    crop: str = Query("tomato", description="Crop identifier"),
+    district: str = Query("Bengaluru Urban", description="District name"),
+    market_name: str = Query("Bengaluru (Binny Mill)", description="Market name"),
+    prevailing_price: float = Query(2450.0, description="Local prevailing APMC price"),
+):
+    """Unified payload aggregating all 7 real-time external data domains."""
+    data = get_comprehensive_external_analysis(crop, district, market_name, prevailing_price)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["Multi-source External Intelligence (7 Pillars)"], source="live"),
+    )
+
+
+# -----------------------------------------------------------------------------
+# KrushiMitra Deep Integration Endpoints
+# -----------------------------------------------------------------------------
+
+@router.get("/krushimitra/waste-to-value")
+def get_waste_to_value_analysis(
+    crop: str = Query("tomato", description="Crop identifier"),
+    condition: str = Query("damaged", description="Condition: damaged | price_crash | surplus"),
+    qty_kg: float = Query(500.0, description="Raw quantity in kilograms"),
+    from_town: str = Query("CHIK", description="Origin town code (e.g. CHIK, TUM, HAS)"),
+):
+    """Waste-to-Value secondary processing calculator with revenue multiples and cluster mapping."""
+    data = calculate_waste_to_value(crop=crop, condition=condition, quantity_kg=qty_kg, origin_town_code=from_town)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["KrushiMitra Waste-to-Value Engine & Cluster Locator"], source="live"),
+    )
+
+
+@router.get("/krushimitra/cross-correlation")
+def get_cross_correlation_analysis(
+    crop: str = Query("tomato", description="Crop identifier"),
+    mandi: str = Query("KOL", description="Mandi code: KOL | HUB | BLR | MYS | BEL | RAI"),
+):
+    """3-Way Scenarios (Optimistic, Likely, Pessimistic) & What-If stress modeling with Pearson r."""
+    data = get_cross_correlation_scenarios(crop=crop, mandi_code=mandi)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["KrushiMitra Statistical Cross-Correlation & Stress Scenarios"], source="live"),
+    )
+
+
+@router.get("/krushimitra/news-sentiment")
+def get_news_sentiment(
+    crop: str = Query("tomato", description="Crop identifier"),
+):
+    """Agri market news with sentiment analysis and bilingual farmer takeaways."""
+    data = get_agri_news_sentiment(crop=crop)
+    return ApiResponse(
+        data=data,
+        meta=make_meta(["KrushiMitra News Intelligence & Sentiment Analysis"], source="live"),
+    )
+
+
+@router.get("/krushimitra/processing-clusters")
+def get_processing_clusters():
+    """Certified agro-processing food clusters in Karnataka."""
+    return ApiResponse(
+        data=PROCESSING_UNITS,
+        meta=make_meta(["Karnataka Agro-Processing Clusters Directory"], source="live"),
+    )
+
+
+@router.get("/krushimitra/origin-towns")
+def get_origin_towns():
+    """Karnataka agricultural production towns for logistics and haulage calculation."""
+    return ApiResponse(
+        data=ORIGIN_TOWNS,
+        meta=make_meta(["Karnataka Origin Towns Reference Catalog"], source="live"),
+    )
+
+
+class ChatQueryRequest:
+    pass
+
+
+@router.post("/krushimitra/chat")
+def chat_advisory(
+    payload: dict,
+):
+    """Bilingual farmer advisory chatbot (auto-detects English vs. Kannada script)."""
+    query = payload.get("query", "ಬೆಲೆ ಎಷ್ಟಿದೆ?")
+    crop = payload.get("crop", "tomato")
+    district = payload.get("district", "Kolar")
+    reply = generate_farmer_advisory_reply(query=query, crop=crop, district=district)
+    return ApiResponse(
+        data=reply,
+        meta=make_meta(["KrushiMitra Bilingual AI Advisory Engine"], source="live"),
+    )
+
+

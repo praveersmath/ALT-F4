@@ -93,5 +93,62 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+
+  // Multi-Source External Data Feeds (7 Pillars)
+  getComprehensiveExternalAnalysis: (
+    crop: string,
+    district: string,
+    marketName = "Bengaluru (Binny Mill)",
+    prevailingPrice = 2450
+  ) =>
+    request<ApiResponse<any>>(
+      `/api/external/comprehensive-analysis?crop=${crop}&district=${encodeURIComponent(
+        district
+      )}&market_name=${encodeURIComponent(marketName)}&prevailing_price=${prevailingPrice}`
+    ),
+  getWeatherComparison: (district: string) =>
+    request<ApiResponse<any>>(`/api/external/weather-comparison?district=${encodeURIComponent(district)}`),
+  getProductionApy: (crop: string, district: string) =>
+    request<ApiResponse<any>>(
+      `/api/external/production-apy?crop=${crop}&district=${encodeURIComponent(district)}`
+    ),
+  getAgmarknetComparison: (crop: string, marketName: string, prevailingPrice: number) =>
+    request<ApiResponse<any>>(
+      `/api/external/mandi-agmarknet?crop=${crop}&market_name=${encodeURIComponent(
+        marketName
+      )}&prevailing_price=${prevailingPrice}`
+    ),
+  getSatelliteNdvi: (district: string) =>
+    request<ApiResponse<any>>(`/api/external/satellite-ndvi?district=${encodeURIComponent(district)}`),
+  getSoilHealth: (district: string, crop: string) =>
+    request<ApiResponse<any>>(
+      `/api/external/soil-health?district=${encodeURIComponent(district)}&crop=${crop}`
+    ),
+  getPestRisk: (crop: string, district: string) =>
+    request<ApiResponse<any>>(
+      `/api/external/pest-risk?crop=${crop}&district=${encodeURIComponent(district)}`
+    ),
+  getFciNabardSupply: (crop: string) =>
+    request<ApiResponse<any>>(`/api/external/fci-nabard-supply?crop=${crop}`),
+
+  // KrushiMitra Deep Integration
+  getWasteToValue: (crop = "tomato", condition = "damaged", qtyKg = 500, fromTown = "CHIK") =>
+    request<ApiResponse<any>>(
+      `/api/krushimitra/waste-to-value?crop=${crop}&condition=${condition}&qty_kg=${qtyKg}&from_town=${fromTown}`
+    ),
+  getCrossCorrelation: (crop = "tomato", mandi = "KOL") =>
+    request<ApiResponse<any>>(
+      `/api/krushimitra/cross-correlation?crop=${crop}&mandi=${mandi}`
+    ),
+  getNewsSentiment: (crop = "tomato") =>
+    request<ApiResponse<any>>(`/api/krushimitra/news-sentiment?crop=${crop}`),
+  getProcessingClusters: () => request<ApiResponse<any>>("/api/krushimitra/processing-clusters"),
+  getOriginTowns: () => request<ApiResponse<any>>("/api/krushimitra/origin-towns"),
+  sendChatAdvisory: (query: string, crop = "tomato", district = "Kolar") =>
+    request<ApiResponse<any>>("/api/krushimitra/chat", {
+      method: "POST",
+      body: JSON.stringify({ query, crop, district }),
+    }),
 };
+
 

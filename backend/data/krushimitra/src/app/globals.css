@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-fraunces), "Georgia", serif;
+  --font-body: var(--font-inter), "Noto Sans Kannada", system-ui, sans-serif;
+  --font-kannada: var(--font-kannada), "Nirmala UI", sans-serif;
+
+  --color-cream: #faf6ee;
+  --color-cream-2: #f4eee0;
+  --color-paper: #fffdf8;
+  --color-ink: #1a241c;
+  --color-ink-soft: #42503f;
+  --color-forest: #1d4633;
+  --color-forest-2: #2c6047;
+  --color-moss: #587a58;
+  --color-lime-leaf: #8fae6a;
+  --color-harvest: #d98e2b;
+  --color-harvest-2: #b06f16;
+  --color-tomato: #c2402e;
+  --color-ragi: #8a6a35;
+  --color-onion: #7a4a8c;
+  --color-sky-bad: #3e6e94;
+
+  --shadow-soft: 0 1px 2px rgb(26 36 28 / 0.05), 0 8px 28px -12px rgb(26 36 28 / 0.18);
+  --shadow-lift: 0 2px 6px rgb(26 36 28 / 0.07), 0 18px 44px -16px rgb(26 36 28 / 0.28);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01" on, "liga" on;
+}
+
+.lang-kn, .lang-kn * {
+  letter-spacing: 0 !important;
+}
+
+/* grain texture overlay */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 9s steps(10) infinite;
+}
+@keyframes grain-shift {
+  0%,100% { transform: translate(0,0); } 10% { transform: translate(-3%,-5%); }
+  30% { transform: translate(4%,2%); } 50% { transform: translate(-2%,4%); }
+  70% { transform: translate(3%,-3%); } 90% { transform: translate(-4%,1%); }
+}
+
+/* card */
+.card {
+  background: var(--color-paper);
+  border: 1px solid rgb(26 36 28 / 0.09);
+  border-radius: 1.4rem;
+  box-shadow: var(--shadow-soft);
+}
+.card-hover {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s, border-color 0.35s;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-color: rgb(26 36 28 / 0.16);
+}
+
+/* ticker marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 42s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+
+/* shimmer skeleton */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgb(26 36 28 / 0.06) 25%, rgb(26 36 28 / 0.11) 37%, rgb(26 36 28 / 0.06) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 0.9rem;
+}
+
+/* soft pulse for live dot */
+@keyframes livepulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+.live-dot { animation: livepulse 1.8s ease-in-out infinite; }
+
+/* chart tooltip */
+.chart-tip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px));
+  white-space: nowrap;
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(26 36 28 / 0.18); border-radius: 8px; border: 2px solid var(--color-cream); }
+::-webkit-scrollbar-thumb:hover { background: rgb(26 36 28 / 0.3); }
+
+::selection { background: rgb(217 142 43 / 0.28); }
+
+/* input focus */
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: 2px solid rgb(217 142 43 / 0.55);
+  outline-offset: 1px;
+}
+
+/* segmented control */
+.seg-active {
+  background: var(--color-forest) !important;
+  color: var(--color-cream) !important;
+  box-shadow: 0 6px 16px -8px rgb(29 70 51 / 0.65);
+}
+
+/* dashed forecast path handled inline; keep utility */
+.text-balance { text-wrap: balance; }
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  .grain::before { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
