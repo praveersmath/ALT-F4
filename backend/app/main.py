@@ -35,6 +35,17 @@ def create_app() -> FastAPI:
     report = load_modules(application)
     Base.metadata.create_all(bind=engine)
 
+    # Auto-seed initial fixtures if markets table is empty
+    try:
+        from app.contracts.db_models import Market
+        from app.core.db import SessionLocal
+        with SessionLocal() as db:
+            if db.query(Market).count() == 0:
+                from scripts.make_fixtures import generate_fixtures
+                generate_fixtures()
+    except Exception:
+        pass
+
     @application.get("/health")
     def health():
         failed = [m for m in report if m["status"] == "failed"]
