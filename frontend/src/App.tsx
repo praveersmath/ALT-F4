@@ -50,8 +50,6 @@ import { TopUtilityBar } from "./components/TopUtilityBar";
 import { HeaderNav } from "./components/HeaderNav";
 import { HomepageDashboard } from "./components/HomepageDashboard";
 import { MarketAtlasView } from "./components/MarketAtlasView";
-import { HistoryView } from "./components/HistoryView";
-import { GalleryView } from "./components/GalleryView";
 import { UserManualView } from "./components/UserManualView";
 import { AboutContactView } from "./components/AboutContactView";
 import { Footer } from "./components/Footer";
@@ -68,15 +66,7 @@ const DEFAULT_MARKETS: MarketInfo[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<
     | "home"
-    | "history"
-    | "places"
-    | "personalities"
-    | "events"
     | "atlas"
-    | "gallery"
-    | "about"
-    | "manual"
-    | "contact"
     | "market"
     | "forecast"
     | "logistics"
@@ -84,6 +74,8 @@ export default function App() {
     | "advisory"
     | "external"
     | "krushimitra"
+    | "manual"
+    | "about"
   >("home");
   const [textSize, setTextSize] = useState<"sm" | "md" | "lg">("md");
   const [highContrast, setHighContrast] = useState<boolean>(false);
@@ -405,20 +397,6 @@ export default function App() {
           <HomepageDashboard onNavigateToTab={(tab: any) => setActiveTab(tab)} language={language} />
         )}
 
-        {/* HISTORICAL ARCHIVES (All, Places, Personalities, Events, Timeline) */}
-        {activeTab === "history" && (
-          <HistoryView language={language} initialSubTab="all" />
-        )}
-        {activeTab === "places" && (
-          <HistoryView language={language} initialSubTab="places" />
-        )}
-        {activeTab === "personalities" && (
-          <HistoryView language={language} initialSubTab="personalities" />
-        )}
-        {activeTab === "events" && (
-          <HistoryView language={language} initialSubTab="events" />
-        )}
-
         {/* AGMARKNET-STYLE INTERACTIVE MARKET ATLAS & MAP VIEW */}
         {activeTab === "atlas" && (
           <MarketAtlasView
@@ -434,12 +412,8 @@ export default function App() {
           />
         )}
 
-        {/* HISTORICAL PHOTO GALLERY */}
-        {activeTab === "gallery" && <GalleryView language={language} />}
-
         {/* ABOUT US & CONTACT */}
         {activeTab === "about" && <AboutContactView language={language} />}
-        {activeTab === "contact" && <AboutContactView language={language} />}
 
         {/* DEDICATED USER MANUAL (13 SECTIONS + EXPANDABLE FAQ) */}
         {activeTab === "manual" && <UserManualView language={language} />}

@@ -12,90 +12,82 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
   };
 
   return (
-    <footer className="bg-[#2D1E18] text-[#FDFBF7] mt-16 border-t-2 border-[#C5A059]/40">
+    <footer className="bg-[#1A231C] text-[#FDFBF7] mt-16 border-t-2 border-[#1F7A3D]/40">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-xs">
           {/* Col 1: Platform Identity */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-[#C5A059] flex items-center justify-center text-[#2D1E18] font-bold">
-                <Landmark className="w-5 h-5 text-[#2D1E18]" />
+              <div className="w-8 h-8 rounded-lg bg-[#1F7A3D] flex items-center justify-center text-white font-bold">
+                <Landmark className="w-5 h-5 text-white" />
               </div>
-              <span className="font-extrabold text-base text-[#FDFBF7] tracking-tight">
+              <span className="font-extrabold text-base text-white tracking-tight">
                 AgriIntel Karnataka
               </span>
             </div>
-            <p className="text-[#E8DFD8] leading-relaxed">
-              Preserving Karnataka's rich agricultural heritage and empowering farming communities with multi-source scientific data, predictive models, and fair market access.
+            <p className="text-gray-300 leading-relaxed">
+              Karnataka APMC agricultural intelligence platform providing real-time mandi price forecasts, AGMARKNET spatial market atlas, logistics freight optimization, and 7-pillar external data analytics.
             </p>
-            <div className="text-[11px] text-[#C5A059]">
-              Digitally Cataloging 140+ Years of Mandi History
+            <div className="text-[11px] text-[#C5A059] font-semibold">
+              Regulated Markets & Predictive Agricultural Economics
             </div>
           </div>
 
-          {/* Col 2: Historical Archives */}
+          {/* Col 2: Core Platform Modules */}
           <div className="space-y-2.5">
             <h4 className="font-bold text-sm text-[#C5A059] uppercase tracking-wider">
-              Heritage Archives
+              Market Intelligence
             </h4>
-            <ul className="space-y-1.5 text-[#E8DFD8]">
-              <li>
-                <button
-                  onClick={() => onNavigateToTab("places")}
-                  className="hover:text-[#C5A059] transition"
-                >
-                  Historical Places & Mandis
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateToTab("personalities")}
-                  className="hover:text-[#C5A059] transition"
-                >
-                  Agrarian Visionaries & Leaders
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateToTab("events")}
-                  className="hover:text-[#C5A059] transition"
-                >
-                  Chronological Timeline & Milestones
-                </button>
-              </li>
+            <ul className="space-y-1.5 text-gray-300">
               <li>
                 <button
                   onClick={() => onNavigateToTab("atlas")}
                   className="hover:text-[#C5A059] transition"
                 >
-                  Interactive Karnataka Market Atlas
+                  Karnataka APMC Market Atlas (Map)
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => onNavigateToTab("gallery")}
-                  className="hover:text-[#C5A059] transition"
-                >
-                  Historical Photographic Gallery
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: Intelligence & Assistance */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-sm text-[#C5A059] uppercase tracking-wider">
-              Market Platform & Help
-            </h4>
-            <ul className="space-y-1.5 text-[#E8DFD8]">
               <li>
                 <button
                   onClick={() => onNavigateToTab("market")}
                   className="hover:text-[#C5A059] transition"
                 >
-                  Real-time APMC Mandi Prices
+                  Mandi Prices & Hike Alerts
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => onNavigateToTab("forecast")}
+                  className="hover:text-[#C5A059] transition"
+                >
+                  ML Predictive Price Forecasting
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigateToTab("logistics")}
+                  className="hover:text-[#C5A059] transition"
+                >
+                  Logistics & Transport Cost Optimizer
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigateToTab("marketplace")}
+                  className="hover:text-[#C5A059] transition"
+                >
+                  B2B Farmer-to-Buyer Marketplace
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 3: Advanced Analytics & Help */}
+          <div className="space-y-2.5">
+            <h4 className="font-bold text-sm text-[#C5A059] uppercase tracking-wider">
+              Scientific Feeds & Guides
+            </h4>
+            <ul className="space-y-1.5 text-gray-300">
               <li>
                 <button
                   onClick={() => onNavigateToTab("external")}
@@ -114,6 +106,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigateToTab("advisory")}
+                  className="hover:text-[#C5A059] transition"
+                >
+                  Crop Recommendation & MSP Advisory
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigateToTab("manual")}
                   className="hover:text-[#C5A059] transition font-bold text-[#C5A059]"
                 >
@@ -125,7 +125,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
                   onClick={() => onNavigateToTab("about")}
                   className="hover:text-[#C5A059] transition"
                 >
-                  About the Project & Inquiries
+                  About Platform & Contact Form
                 </button>
               </li>
             </ul>
@@ -134,10 +134,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
           {/* Col 4: Verified Portals & Back to Top */}
           <div className="space-y-3">
             <h4 className="font-bold text-sm text-[#C5A059] uppercase tracking-wider">
-              Government Portals
+              Verified Portals
             </h4>
-            <p className="text-[11px] text-[#E8DFD8]">
-              Integrated with AGMARKNET, data.gov.in, IMD Weather, FAOSTAT, and Soil Health Card Portal.
+            <p className="text-[11px] text-gray-300">
+              Connected with AGMARKNET, data.gov.in, IMD Weather, NASA POWER, Earth Engine, and Soil Health Card Portal.
             </p>
             <div className="pt-2">
               <button
@@ -153,12 +153,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
         </div>
 
         {/* Bottom Bar: Copyright & Accessibility statement */}
-        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#E8DFD8]/80">
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-gray-400">
           <div>
-            © {new Date().getFullYear()} AgriIntel Karnataka Local History & Market Platform. All rights reserved.
+            © {new Date().getFullYear()} AgriIntel Karnataka Market Platform. All rights reserved.
           </div>
           <div className="flex items-center space-x-3 text-[#C5A059]">
-            <span>Non-Commercial Educational & Digital Heritage Preservation</span>
+            <span>Agricultural Intelligence & Supply Chain Prediction</span>
             <span>•</span>
             <span>WCAG 2.1 Accessible</span>
           </div>
@@ -167,4 +167,3 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
     </footer>
   );
 };
-
