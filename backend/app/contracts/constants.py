@@ -1,7 +1,19 @@
 CROPS = {
     "tomato": {"name": "Tomato", "category": "vegetable", "msp_applicable": False},
     "onion": {"name": "Onion", "category": "vegetable", "msp_applicable": False},
+    "potato": {"name": "Potato", "category": "vegetable", "msp_applicable": False},
     "wheat": {"name": "Wheat", "category": "cereal", "msp_applicable": True},
+    "maize": {"name": "Maize", "category": "cereal", "msp_applicable": True},
+    "cotton": {"name": "Cotton", "category": "commercial", "msp_applicable": True},
+    "chana": {"name": "Bengal Gram (Chana)", "category": "pulse", "msp_applicable": True},
+    "tur": {"name": "Red Gram (Tur)", "category": "pulse", "msp_applicable": True},
+    "ragi": {"name": "Finger Millet (Ragi)", "category": "millet", "msp_applicable": True},
+    "arecanut": {"name": "Arecanut", "category": "plantation", "msp_applicable": False},
+    "coffee": {"name": "Coffee", "category": "plantation", "msp_applicable": False},
+    "chilli": {"name": "Byadgi Chilli", "category": "spice", "msp_applicable": False},
+    "groundnut": {"name": "Groundnut", "category": "oilseed", "msp_applicable": True},
+    "sugarcane": {"name": "Sugarcane", "category": "commercial", "msp_applicable": True},
+    "rice": {"name": "Paddy / Rice", "category": "cereal", "msp_applicable": True},
 }
 STATES = {"karnataka": "Karnataka"}
 HORIZONS = (7, 15)

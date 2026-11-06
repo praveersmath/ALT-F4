@@ -37,7 +37,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
     { id: "logistics", label: language === "kn" ? "ಸಾರಿಗೆ ವೆಚ್ಚ" : "Logistics", icon: Truck },
     { id: "marketplace", label: language === "kn" ? "ಮಾರುಕಟ್ಟೆ" : "Marketplace", icon: ShoppingBag },
     { id: "advisory", label: language === "kn" ? "ಬೆಳೆ ಸಲಹೆ" : "Crop Advisory", icon: AlertTriangle },
-    { id: "external", label: language === "kn" ? "೭-ಸ್ತಂಭಗಳ ಡೇಟಾ" : "7 Pillars", icon: Globe },
+    { id: "external", label: language === "kn" ? "೭-ಸ್ತಂಭಗಳ ಹೋಲಿಕೆ" : "7 Pillars Comparison", icon: Globe },
     { id: "krushimitra", label: language === "kn" ? "ಕೃಷಿಮಿತ್ರ" : "KrushiMitra", icon: Recycle },
     { id: "manual", label: language === "kn" ? "ಕೈಪಿಡಿ" : "User Manual", icon: HelpCircle },
     { id: "about", label: language === "kn" ? "ಬಗ್ಗೆ / ಸಂಪರ್ಕ" : "About & Contact", icon: Info },

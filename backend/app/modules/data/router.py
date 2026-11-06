@@ -34,6 +34,7 @@ from app.contracts.schemas import (
 from app.core.db import get_db
 from app.modules.data.external_sources import (
     compare_agmarknet_live_prices,
+    compare_districts_analysis,
     compare_weather_sources,
     get_cabi_pest_advisory,
     get_comprehensive_external_analysis,
@@ -404,6 +405,28 @@ def get_comprehensive_analysis(
     return ApiResponse(
         data=data,
         meta=make_meta(["Multi-source External Intelligence (7 Pillars)"], source="live"),
+    )
+
+
+@router.get("/external/district-comparison")
+def get_district_comparison(
+    crop: str = Query("tomato", description="Crop identifier"),
+    district_a: str = Query("Bengaluru Urban", description="Primary district name"),
+    district_b: str = Query("Kolar", description="Comparison district name"),
+    prevailing_price_a: float = Query(2450.0, description="Price in district A"),
+    prevailing_price_b: float = Query(2380.0, description="Price in district B"),
+):
+    """Side-by-side comparative analysis of two Karnataka districts across all 7 data sources."""
+    data = compare_districts_analysis(
+        crop=crop,
+        district_a=district_a,
+        district_b=district_b,
+        prevailing_price_a=prevailing_price_a,
+        prevailing_price_b=prevailing_price_b,
+    )
+    return ApiResponse(
+        data=data,
+        meta=make_meta([f"Cross-District Comparison: {district_a} vs {district_b}"], source="live"),
     )
 
 

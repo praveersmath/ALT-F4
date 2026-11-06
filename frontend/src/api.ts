@@ -130,6 +130,20 @@ export const api = {
     ),
   getFciNabardSupply: (crop: string) =>
     request<ApiResponse<any>>(`/api/external/fci-nabard-supply?crop=${crop}`),
+  getDistrictComparison: (
+    crop: string,
+    districtA: string,
+    districtB: string,
+    priceA = 2450,
+    priceB = 2380
+  ) =>
+    request<ApiResponse<any>>(
+      `/api/external/district-comparison?crop=${crop}&district_a=${encodeURIComponent(
+        districtA
+      )}&district_b=${encodeURIComponent(
+        districtB
+      )}&prevailing_price_a=${priceA}&prevailing_price_b=${priceB}`
+    ),
 
   // KrushiMitra Deep Integration
   getWasteToValue: (crop = "tomato", condition = "damaged", qtyKg = 500, fromTown = "CHIK") =>

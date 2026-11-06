@@ -26,11 +26,23 @@ def generate_fixtures():
     db = SessionLocal()
 
     try:
-        # 1. Crops
+        # 1. Crops (15 Comprehensive Karnataka agricultural commodities)
         crops_data = [
             {"id": "tomato", "name": "Tomato", "category": "vegetable", "msp_applicable": False},
             {"id": "onion", "name": "Onion", "category": "vegetable", "msp_applicable": False},
+            {"id": "potato", "name": "Potato", "category": "vegetable", "msp_applicable": False},
             {"id": "wheat", "name": "Wheat", "category": "cereal", "msp_applicable": True},
+            {"id": "maize", "name": "Maize", "category": "cereal", "msp_applicable": True},
+            {"id": "cotton", "name": "Cotton", "category": "commercial", "msp_applicable": True},
+            {"id": "chana", "name": "Bengal Gram (Chana)", "category": "pulse", "msp_applicable": True},
+            {"id": "tur", "name": "Red Gram (Tur)", "category": "pulse", "msp_applicable": True},
+            {"id": "ragi", "name": "Finger Millet (Ragi)", "category": "millet", "msp_applicable": True},
+            {"id": "arecanut", "name": "Arecanut", "category": "plantation", "msp_applicable": False},
+            {"id": "coffee", "name": "Coffee", "category": "plantation", "msp_applicable": False},
+            {"id": "chilli", "name": "Byadgi Chilli", "category": "spice", "msp_applicable": False},
+            {"id": "groundnut", "name": "Groundnut", "category": "oilseed", "msp_applicable": True},
+            {"id": "sugarcane", "name": "Sugarcane", "category": "commercial", "msp_applicable": True},
+            {"id": "rice", "name": "Paddy / Rice", "category": "cereal", "msp_applicable": True},
         ]
         for c in crops_data:
             existing = db.query(Crop).filter_by(id=c["id"]).first()
@@ -38,13 +50,28 @@ def generate_fixtures():
                 db.add(Crop(**c))
         db.commit()
 
-        # 2. Markets (5 Karnataka markets)
+        # 2. Markets (20 Major Karnataka APMC Regional Terminals)
         markets_data = [
             {"name": "Bengaluru (Binny Mill)", "district": "Bengaluru Urban", "state": "karnataka", "lat": 12.9716, "lon": 77.5946},
             {"name": "Kolar Mandi", "district": "Kolar", "state": "karnataka", "lat": 13.1367, "lon": 78.1291},
             {"name": "Hubballi APMC", "district": "Dharwad", "state": "karnataka", "lat": 15.3647, "lon": 75.1240},
             {"name": "Belagavi APMC", "district": "Belagavi", "state": "karnataka", "lat": 15.8497, "lon": 74.4977},
             {"name": "Mysuru Bandipalya", "district": "Mysuru", "state": "karnataka", "lat": 12.2958, "lon": 76.6394},
+            {"name": "Davanagere APMC", "district": "Davanagere", "state": "karnataka", "lat": 14.4644, "lon": 75.9218},
+            {"name": "Shimoga APMC", "district": "Shimoga", "state": "karnataka", "lat": 13.9299, "lon": 75.5681},
+            {"name": "Tumakuru APMC", "district": "Tumakuru", "state": "karnataka", "lat": 13.3409, "lon": 77.1010},
+            {"name": "Mandya APMC", "district": "Mandya", "state": "karnataka", "lat": 12.5242, "lon": 76.8958},
+            {"name": "Hassan APMC", "district": "Hassan", "state": "karnataka", "lat": 13.0072, "lon": 76.1029},
+            {"name": "Byadgi APMC", "district": "Haveri", "state": "karnataka", "lat": 14.6826, "lon": 75.4878},
+            {"name": "Kalaburagi APMC (Nehru Gunj)", "district": "Kalaburagi", "state": "karnataka", "lat": 17.3297, "lon": 76.8343},
+            {"name": "Raichur APMC", "district": "Raichur", "state": "karnataka", "lat": 16.2076, "lon": 77.3463},
+            {"name": "Ballari APMC", "district": "Ballari", "state": "karnataka", "lat": 15.1394, "lon": 76.9214},
+            {"name": "Vijayapura APMC", "district": "Vijayapura", "state": "karnataka", "lat": 16.8302, "lon": 75.7100},
+            {"name": "Chikkamagaluru APMC", "district": "Chikkamagaluru", "state": "karnataka", "lat": 13.3161, "lon": 75.7720},
+            {"name": "Bagalkote APMC", "district": "Bagalkote", "state": "karnataka", "lat": 16.1691, "lon": 75.6615},
+            {"name": "Chitradurga APMC", "district": "Chitradurga", "state": "karnataka", "lat": 14.2251, "lon": 76.3980},
+            {"name": "Gadag APMC", "district": "Gadag", "state": "karnataka", "lat": 15.4298, "lon": 75.6320},
+            {"name": "Udupi-Mangaluru APMC", "district": "Dakshina Kannada", "state": "karnataka", "lat": 12.9141, "lon": 74.8560},
         ]
         market_objs = []
         for m in markets_data:
@@ -56,23 +83,51 @@ def generate_fixtures():
             market_objs.append(rec)
         db.commit()
 
-        # 3. Reference MSP (Wheat only)
-        existing_msp = db.query(MspRecord).filter_by(crop_id="wheat", marketing_year="2024-25").first()
-        if not existing_msp:
-            db.add(MspRecord(
-                crop_id="wheat",
-                marketing_year="2024-25",
-                msp_inr_per_qtl=2275.0,
-                source_note="Official CACP Benchmark 2024-25 (Fixture)",
-                source="fixture",
-            ))
+        # 3. Reference MSP Records
+        msp_specs = [
+            ("wheat", 2275.0),
+            ("maize", 2090.0),
+            ("cotton", 7121.0),
+            ("chana", 5440.0),
+            ("tur", 7550.0),
+            ("ragi", 4290.0),
+            ("groundnut", 6783.0),
+            ("rice", 2300.0),
+            ("sugarcane", 340.0),
+        ]
+        for cid, val in msp_specs:
+            existing_msp = db.query(MspRecord).filter_by(crop_id=cid, marketing_year="2024-25").first()
+            if not existing_msp:
+                db.add(MspRecord(
+                    crop_id=cid,
+                    marketing_year="2024-25",
+                    msp_inr_per_qtl=val,
+                    source_note=f"Official CACP Benchmark 2024-25 ({cid})",
+                    source="fixture",
+                ))
 
         # 4. Two years of daily price records
         start_date = dt.date.today() - dt.timedelta(days=730)
         rng = random.Random(42)  # Deterministic seed
 
         print("Generating 2 years of daily price & weather records...")
-        base_prices = {"tomato": 1800.0, "onion": 2200.0, "wheat": 2400.0}
+        base_prices = {
+            "tomato": 1800.0,
+            "onion": 2200.0,
+            "potato": 1600.0,
+            "wheat": 2400.0,
+            "maize": 2150.0,
+            "cotton": 6900.0,
+            "chana": 5300.0,
+            "tur": 7400.0,
+            "ragi": 3800.0,
+            "arecanut": 44000.0,
+            "coffee": 28000.0,
+            "chilli": 19500.0,
+            "groundnut": 6400.0,
+            "sugarcane": 350.0,
+            "rice": 2500.0,
+        }
 
         prices_to_insert = []
         weather_to_insert = []

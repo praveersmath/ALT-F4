@@ -225,10 +225,10 @@ export const HomepageDashboard: React.FC<HomepageDashboardProps> = ({
             },
             {
               tab: "external",
-              title: "External Data (7 Pillars)",
-              desc: "Live comparison across IMD, NASA POWER, AGMARKNET, Earth Engine NDVI, ISRIC, CABI, FCI.",
+              title: "7 Pillars Comparison",
+              desc: "Multi-source real-time data analysis across IMD, NASA POWER, DES Agri, AGMARKNET, Earth Engine, ISRIC, CABI, FCI & NABARD.",
               icon: Globe,
-              badge: "7 Pillars",
+              badge: "7 Pillars Analysis",
               color: "border-emerald-300 hover:border-emerald-500",
             },
             {
