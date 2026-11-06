@@ -2,9 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #F7F8F5;
-  color: #1A1F16;
+html {
+  scroll-behavior: smooth;
 }
 
+:root {
+  --font-scale: 1;
+  --bg-cream: #FDFBF7;
+  --surface-ivory: #FFFDF9;
+  --text-brown: #2D1E18;
+  --gold-accent: #C5A059;
+  --navy-deep: #0F2027;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-cream);
+  color: var(--text-brown);
+  font-size: calc(1rem * var(--font-scale));
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Accessibility Text Scale classes */
+body.text-scale-sm {
+  --font-scale: 0.9;
+}
+body.text-scale-md {
+  --font-scale: 1;
+}
+body.text-scale-lg {
+  --font-scale: 1.15;
+}
+
+/* High Contrast Mode for Accessibility */
+body.high-contrast {
+  background-color: #0d0d0d !important;
+  color: #ffffff !important;
+}
+
+body.high-contrast .bg-white,
+body.high-contrast .bg-\[\#FDFBF7\],
+body.high-contrast .bg-\[\#F7F8F5\],
+body.high-contrast .bg-\[\#F7F4EB\],
+body.high-contrast .bg-\[\#F9F6F0\] {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #ffd700 !important;
+}
+
+body.high-contrast .text-\[\#5B6354\],
+body.high-contrast .text-\[\#2D1E18\],
+body.high-contrast .text-gray-600,
+body.high-contrast .text-gray-700 {
+  color: #e5e5e5 !important;
+}
+
+body.high-contrast .text-\[\#1F7A3D\],
+body.high-contrast .text-emerald-700,
+body.high-contrast .text-blue-700,
+body.high-contrast .text-amber-700 {
+  color: #ffd700 !important;
+}
+
+body.high-contrast button:focus-visible,
+body.high-contrast a:focus-visible {
+  outline: 3px solid #ffd700 !important;
+  outline-offset: 2px !important;
+}
+
+/* Focus visible indicators across the whole app */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #C5A059;
+  outline-offset: 2px;
+}
+
+/* Skip link styling */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #2D1E18;
+  color: #FDFBF7;
+  padding: 8px 16px;
+  z-index: 100;
+  border-radius: 0 0 6px 0;
+  font-weight: 600;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 0;
+}

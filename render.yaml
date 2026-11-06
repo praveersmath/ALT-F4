@@ -11,3 +11,4 @@ services:
         value: 10000
       - key: AGRIINTEL_DB_PATH
         value: /app/backend/agriintel.db
+
