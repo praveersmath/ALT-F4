@@ -11,28 +11,16 @@ backend_path = Path(__file__).resolve().parent.parent / "backend"
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-try:
-    from app.core.db import Base, SessionLocal, engine  # noqa: E402
-    from app.contracts.db_models import (  # noqa: E402
-        Crop,
-        DemandProxy,
-        FuelPrice,
-        Market,
-        MspRecord,
-        PriceRecord,
-        WeatherDaily,
-    )
-except ImportError:
-    from backend.app.core.db import Base, SessionLocal, engine  # type: ignore # noqa: E402
-    from backend.app.contracts.db_models import (  # type: ignore # noqa: E402
-        Crop,
-        DemandProxy,
-        FuelPrice,
-        Market,
-        MspRecord,
-        PriceRecord,
-        WeatherDaily,
-    )
+from app.core.db import Base, SessionLocal, engine
+from app.contracts.db_models import (
+    Crop,
+    DemandProxy,
+    FuelPrice,
+    Market,
+    MspRecord,
+    PriceRecord,
+    WeatherDaily,
+)
 
 
 def generate_fixtures():
