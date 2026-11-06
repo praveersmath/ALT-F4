@@ -1,11 +1,17 @@
 import sys
 from pathlib import Path
 backend_path = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
 
-from app.core.db import SessionLocal
-from app.contracts.db_models import User, Listing, Market, Crop
-from app.modules.auth.auth_service import hash_password
+try:
+    from app.core.db import SessionLocal
+    from app.contracts.db_models import User, Listing, Market, Crop
+    from app.modules.auth.auth_service import hash_password
+except ImportError:
+    from backend.app.core.db import SessionLocal  # type: ignore
+    from backend.app.contracts.db_models import User, Listing, Market, Crop  # type: ignore
+    from backend.app.modules.auth.auth_service import hash_password  # type: ignore
 
 db = SessionLocal()
 

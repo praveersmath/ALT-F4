@@ -8,18 +8,31 @@ from pathlib import Path
 
 # Set path for backend imports
 backend_path = Path(__file__).resolve().parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
 
-from app.core.db import Base, SessionLocal, engine  # noqa: E402
-from app.contracts.db_models import (  # noqa: E402
-    Crop,
-    DemandProxy,
-    FuelPrice,
-    Market,
-    MspRecord,
-    PriceRecord,
-    WeatherDaily,
-)
+try:
+    from app.core.db import Base, SessionLocal, engine  # noqa: E402
+    from app.contracts.db_models import (  # noqa: E402
+        Crop,
+        DemandProxy,
+        FuelPrice,
+        Market,
+        MspRecord,
+        PriceRecord,
+        WeatherDaily,
+    )
+except ImportError:
+    from backend.app.core.db import Base, SessionLocal, engine  # type: ignore # noqa: E402
+    from backend.app.contracts.db_models import (  # type: ignore # noqa: E402
+        Crop,
+        DemandProxy,
+        FuelPrice,
+        Market,
+        MspRecord,
+        PriceRecord,
+        WeatherDaily,
+    )
 
 
 def generate_fixtures():
