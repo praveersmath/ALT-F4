@@ -5,3 +5,4 @@ Write-Host "  API Docs:     http://127.0.0.1:8000/docs" -ForegroundColor Yellow
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 python -m uvicorn app.main:app --app-dir backend --reload --port 8000 --host 127.0.0.1
+
