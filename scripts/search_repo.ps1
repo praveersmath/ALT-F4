@@ -45,26 +45,6 @@ if ($rgAvailable) {
 # Fall back to Select-String
 Write-Host "# Using Select-String (install ripgrep for better performance)" -ForegroundColor Gray
 
-$searchParams = @{
-    Pattern = $Pattern
-    Path    = $Path
-}
-
-# Build file filter
-if ($FileType) {
-    $searchParams.Include = "*.$FileType"
-}
-
-if (-not $CaseSensitive) {
-    $searchParams.CaseSensitive = $false
-}
-
-# Handle directory vs file
-if (Test-Path $Path -PathType Container) {
-    $searchParams.Path = Join-Path $Path "*"
-    $searchParams.Recurse = $true
-}
-
 try {
     $results = Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
     Where-Object { 

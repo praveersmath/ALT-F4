@@ -140,3 +140,4 @@ try:
     print("Seeded B2B wholesale listings successfully!")
 finally:
     db.close()
+

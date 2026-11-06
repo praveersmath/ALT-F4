@@ -10,10 +10,16 @@ from pathlib import Path
 backend_path = Path(__file__).resolve().parent.parent / "backend"
 sys.path.insert(0, str(backend_path))
 
-from app.contracts.db_models import (  # noqa: E402
-    Crop, DemandProxy, FestivalEvent, FuelPrice, Market, MspRecord, PriceRecord, WeatherDaily,
-)
 from app.core.db import Base, SessionLocal, engine  # noqa: E402
+from app.contracts.db_models import (  # noqa: E402
+    Crop,
+    DemandProxy,
+    FuelPrice,
+    Market,
+    MspRecord,
+    PriceRecord,
+    WeatherDaily,
+)
 
 
 def generate_fixtures():
