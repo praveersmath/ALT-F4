@@ -11,10 +11,11 @@ backend_path = Path(__file__).resolve().parent.parent / "backend"
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-from app.core.db import Base, SessionLocal, engine
-from app.contracts.db_models import (
+from app.core.db import Base, SessionLocal, engine  # noqa: E402
+from app.contracts.db_models import (  # noqa: E402
     Crop,
     DemandProxy,
+    FestivalEvent,
     FuelPrice,
     Market,
     MspRecord,
@@ -237,6 +238,30 @@ def generate_fixtures():
                     population=1500000 + int(rng.uniform(200000, 8000000)),
                     year=2021,
                     source_note="Census 2011 projected (Fixture)",
+                    source="fixture",
+                ))
+
+        karnataka_festivals = [
+            ("Makar Sankranti", dt.date(2024, 1, 15)),
+            ("Maha Shivaratri", dt.date(2024, 3, 8)),
+            ("Ugadi (Kannada New Year)", dt.date(2024, 4, 9)),
+            ("Varamahalakshmi Vrata", dt.date(2024, 8, 16)),
+            ("Ganesh Chaturthi", dt.date(2024, 9, 7)),
+            ("Mysuru Dasara", dt.date(2024, 10, 12)),
+            ("Deepavali", dt.date(2024, 11, 1)),
+            ("Karnataka Rajyotsava", dt.date(2024, 11, 1)),
+            ("Makar Sankranti", dt.date(2025, 1, 14)),
+            ("Ugadi", dt.date(2025, 3, 30)),
+            ("Ganesh Chaturthi", dt.date(2025, 8, 27)),
+            ("Mysuru Dasara", dt.date(2025, 10, 2)),
+            ("Deepavali", dt.date(2025, 10, 20)),
+        ]
+        for fest_name, fest_date in karnataka_festivals:
+            if not db.query(FestivalEvent).filter_by(name=fest_name, event_date=fest_date).first():
+                db.add(FestivalEvent(
+                    name=fest_name,
+                    event_date=fest_date,
+                    state="karnataka",
                     source="fixture",
                 ))
 
