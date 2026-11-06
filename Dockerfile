@@ -24,13 +24,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend application
 COPY backend/ ./backend/
+COPY agriintel.db ./agriintel.db
 COPY agriintel.db ./backend/agriintel.db
 
 # Copy built frontend assets from Stage 1 into frontend/dist
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 ENV PORT=8000
-ENV AGRIINTEL_DB_PATH=/app/backend/agriintel.db
+ENV DATABASE_URL=sqlite:////app/agriintel.db
+ENV AGRIINTEL_DB_PATH=/app/agriintel.db
 ENV PYTHONPATH=/app/backend
 
 EXPOSE 8000

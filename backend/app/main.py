@@ -47,6 +47,7 @@ def create_app() -> FastAPI:
         pass
 
     @application.get("/health")
+    @application.get("/api/health")
     def health():
         failed = [m for m in report if m["status"] == "failed"]
         return {"status": "degraded" if failed else "ok", "modules": report}
